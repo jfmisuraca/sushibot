@@ -19,8 +19,9 @@ export default function ChatInterface() {
     e.preventDefault()
     if (!input.trim()) return
 
-    const userMessage = { role: 'user', content: input }
+    const userMessage = { role: 'user' as const, content: input }
     setMessages(prev => [...prev, userMessage])
+
     setInput('')
 
     const response = await fetch('/api/chat', {
@@ -30,7 +31,8 @@ export default function ChatInterface() {
     })
 
     const data = await response.json()
-    const botMessage = { role: 'bot', content: data.response }
+    const botMessage = { role: 'bot' as const, content: String(data.response) }
+
     setMessages(prev => [...prev, botMessage])
   }
 
