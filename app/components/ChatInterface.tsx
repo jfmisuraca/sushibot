@@ -54,7 +54,7 @@ export default function ChatInterface() {
           onChange={(e) => setInput(e.target.value)}
           placeholder="Escribe tu mensaje aquí"
         />
-        <button type="submit">Send</button>
+        <button type="submit">Enviar</button>
       </form>
     </div>
   )
