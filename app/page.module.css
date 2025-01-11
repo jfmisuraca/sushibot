@@ -32,6 +32,10 @@
   flex-direction: column;
   gap: 32px;
   grid-row-start: 2;
+  padding: '1rem',
+  minHeight: '100vh',
+  alignItems: 'center',
+  justifyContent: 'center'
 }
 
 .main ol {

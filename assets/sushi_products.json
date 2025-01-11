@@ -1,0 +1,108 @@
+[
+  {
+    "name": "Rollo de Cola Amarilla",
+    "description": "Delicioso rollo de sushi con ingredientes frescos.",
+    "price": 15.97,
+    "quantity": 132,
+    "vegan": true
+  },
+  {
+    "name": "Rollo de Ensalada de Alga",
+    "description": "Una opción saludable y refrescante.",
+    "price": 18.23,
+    "quantity": 159,
+    "vegan": false
+  },
+  {
+    "name": "Uramaki Tempura",
+    "description": "Perfecto para vegans y no vegans.",
+    "price": 17.84,
+    "quantity": 81,
+    "vegan": true
+  },
+  {
+    "name": "Sashimi de Salmón",
+    "description": "Un rollo colorido con una variedad de sabores.",
+    "price": 7.72,
+    "quantity": 115,
+    "vegan": false
+  },
+  {
+    "name": "Rollo de Kanikama",
+    "description": "Una opción saludable y refrescante.",
+    "price": 6.00,
+    "quantity": 180,
+    "vegan": false
+  },
+  {
+    "name": "Rollo Dragón",
+    "description": "Delicioso rollo de sushi con ingredientes frescos.",
+    "price": 18.75,
+    "quantity": 126,
+    "vegan": false
+  },
+  {
+    "name": "Rollo de Anguila",
+    "description": "Una experiencia de sushi atrevida y picante.",
+    "price": 17.99,
+    "quantity": 146,
+    "vegan": true
+  },
+  {
+    "name": "Rollo Arcoíris",
+    "description": "Rico y sabroso con un toque de dulzura.",
+    "price": 16.74,
+    "quantity": 10,
+    "vegan": false
+  },
+  {
+    "name": "Rollo California",
+    "description": "Un rollo colorido con una variedad de sabores.",
+    "price": 6.74,
+    "quantity": 69,
+    "vegan": true
+  },
+  {
+    "name": "Rollo de Atún Picante",
+    "description": "Picante y lleno de sabor, perfecto para amantes del atún.",
+    "price": 11.55,
+    "quantity": 90,
+    "vegan": false
+  },
+  {
+    "name": "Rollo de Pepino y Mango",
+    "description": "Fresco, frutal y vegano.",
+    "price": 13.29,
+    "quantity": 11,
+    "vegan": true
+  },
+  {
+    "name": "Rollo Philadelphia",
+    "description": "Un clásico rollo cremoso con queso y salmón.",
+    "price": 7.90,
+    "quantity": 48,
+    "vegan": false
+  },
+  {
+    "name": "Rollo de Camarón Tempura",
+    "description": "Crujiente por fuera, suave por dentro.",
+    "price": 10.97,
+    "quantity": 131,
+    "vegan": false
+  },
+  {
+    "name": "Rollo de Zanahoria y Palta",
+    "description": "Simple y elegante, un clásico vegano atemporal.",
+    "price": 12.04,
+    "quantity": 77,
+    "vegan": true
+  },
+  {
+    "name": "Rollo de Pescado Blanco",
+    "description": "Una opción saludable y llena de sabor.",
+    "price": 19.97,
+    "quantity": 165,
+    "vegan": false
+  }
+]
+
