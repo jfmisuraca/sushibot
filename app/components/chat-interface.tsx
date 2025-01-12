@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Bot, Send, User } from 'lucide-react'
-import '../styles/chat.css'
+import '../../styles/chat.css'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -12,9 +12,18 @@ interface Message {
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
+  const messagesEndRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  async function handleSubmit(e: React.FormEvent) {
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages]);
+
+  async function handleSubmit(e: React.FormEvent | React.KeyboardEvent) {
     e.preventDefault()
     if (!input.trim() || isLoading) return
 
@@ -24,6 +33,7 @@ export default function ChatInterface() {
 
     // Add user message to chat
     setMessages(prev => [...prev, { role: 'user', content: userMessage }])
+    setInput('')
 
     try {
       const response = await fetch('/api/chat', {
@@ -52,6 +62,13 @@ export default function ChatInterface() {
       setIsLoading(false)
     }
   }
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
 
   return (
     <div className="chat-card">
@@ -85,6 +102,7 @@ export default function ChatInterface() {
               </div>
             )}
           </div>
+          <div ref={messagesEndRef} />
         </div>
       </div>
       <div className="chat-footer">
@@ -92,6 +110,8 @@ export default function ChatInterface() {
           <textarea
             className="chat-input"
             placeholder="Escribe tu mensaje aquí..."
+            autoFocus
+            onKeyUp={handleKeyPress}
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
