@@ -1,12 +1,16 @@
 .chat-card {
   width: 100%;
   max-width: 42rem;
-  margin: 0 auto;
+  margin-top: 2rem;
+  margin-right: auto;
+  margin-bottom: 0px;
+  margin-left: auto;
   background: var(--background);
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
+  position: relative;
   height: 100%;
 }
 
@@ -101,7 +105,7 @@
   padding: 0.5rem;
   border: 1px solid var(--border);
   border-radius: 4px;
-  resize: vertical;
+  resize: none;
   font-family: inherit;
 }
 
