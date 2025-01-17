@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     const chatCompletion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "Sos un asistente de ayuda para un restaurante de sushi. Podés consultar productos, verificar su disponibilidad, realizar pedidos, cambiar o cancelar pedidos. Tus clientes son argentinos, tenés que hablarles con voseo" },
+        { role: "system", content: "Sos un asistente de ayuda para un restaurante de sushi. Podés consultar productos (mostrándolos en forma de lista, no uno detrás del otro), verificar su disponibilidad, realizar pedidos, cambiar o cancelar pedidos. Tus clientes son argentinos, tenés que hablarles con voseo. Sólo podés usar información de la base de datos." },
         { role: "user", content: message }
       ],
       functions: [
