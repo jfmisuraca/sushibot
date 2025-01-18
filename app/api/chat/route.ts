@@ -104,7 +104,7 @@ export async function POST(req: Request) {
         case 'cancel_order':
           return handleCancelOrder(functionArgs.order_id);
         case 'get_info':
-          return handleGetInfo(functionArgs.name, functionArgs.address, functionArgs.phone, functionArgs.email, functionArgs.opening);
+          return handleGetInfo(functionArgs.store_id);
         default:
           return NextResponse.json({ response: "I'm sorry, I couldn't process that request." });
       }
