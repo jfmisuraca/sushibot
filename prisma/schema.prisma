@@ -31,3 +31,12 @@ model Order {
   status    String   @default("pending")
   createdAt DateTime @default(now())
 }
+
+model StoreData {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  name    String
+  address String
+  phone   String
+  email   String
+  opening String
+}

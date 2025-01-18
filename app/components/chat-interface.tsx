@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Bot, Send, User, Sun, Moon } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext'
-import '../../styles/chat.css'
+import "@/styles/chat.css"
 
 interface Message {
   role: 'user' | 'assistant'
@@ -46,7 +46,6 @@ export default function ChatInterface() {
     setIsLoading(true)
     hideKeyboard()
 
-    // Add user message to chat
     setMessages(prev => [...prev, { role: 'user', content: userMessage }])
     setInput('')
 
@@ -65,7 +64,6 @@ export default function ChatInterface() {
 
       const data = await response.json()
 
-      // Add assistant response to chat
       setMessages(prev => [...prev, { role: 'assistant', content: data.response }])
     } catch (error) {
       console.error('Error:', error)

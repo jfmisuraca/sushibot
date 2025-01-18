@@ -69,6 +69,20 @@ export async function POST(req: Request) {
             required: ["order_id"],
           },
         },
+        {
+          name: "get_info",
+          description: "Get information about the store",
+          parameters: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              address: { type: "string" },
+              phone: { type: "string" },
+              email: { type: "string" },
+              opening: { type: "string" },
+            },
+          },
+        },
       ],
     });
 
@@ -89,6 +103,8 @@ export async function POST(req: Request) {
           return handleChangeOrder(functionArgs.order_id, functionArgs.new_quantity);
         case 'cancel_order':
           return handleCancelOrder(functionArgs.order_id);
+        case 'get_info':
+          return handleGetInfo(functionArgs.name, functionArgs.address, functionArgs.phone, functionArgs.email, functionArgs.opening);
         default:
           return NextResponse.json({ response: "I'm sorry, I couldn't process that request." });
       }
@@ -104,7 +120,7 @@ export async function POST(req: Request) {
 async function handleQueryProducts() {
   const products = await prisma.product.findMany();
   const productList = products
-    .map(p => `${p.name}: $${p.price.toFixed(2)} - ${p.description} (${p.vegan ? 'Vegano' : 'No vegano'})`)
+    .map(p => `- ${p.name}: $${p.price.toFixed(2)} - ${p.description} (${p.vegan ? 'Vegano' : 'No vegano'})`)
     .join('\n');
   return NextResponse.json({ response: `Aquí están nuestros productos disponibles:\n${productList}` });
 }
@@ -197,3 +213,63 @@ async function handleCancelOrder(orderId: string) {
   return NextResponse.json({ response: `Tu pedido de ${order.quantity} ${order.product.name} fue cancelado.` });
 }
 
+function isStoreOpen(opening: string): { open: boolean; message: string } {
+  const [openingTime, closingTime] = opening.split('-').map((time) => time.trim());
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinutes = now.getMinutes();
+
+  // Convertir horas de apertura/cierre a minutos del día
+  const [openingHour, openingMinutes] = openingTime.split(':').map(Number);
+  const [closingHour, closingMinutes] = closingTime.split(':').map(Number);
+
+  const openingInMinutes = openingHour * 60 + openingMinutes;
+  const closingInMinutes = closingHour * 60 + closingMinutes;
+  const currentInMinutes = currentHour * 60 + currentMinutes;
+
+  if (currentInMinutes >= openingInMinutes && currentInMinutes < closingInMinutes) {
+    return { open: true, message: `Estamos abiertos hasta las ${closingTime}` };
+  }
+  return { open: false, message: `Estamos cerrados, abrimos a las ${openingTime}` };
+}
+
+export async function handleGetInfo(request: Request) {
+  try {
+    const { query } = Object.fromEntries(new URL(request.url).searchParams);
+    const StoreData = await prisma.StoreData.findFirst();
+
+    if (!StoreData) {
+      return NextResponse.json({ error: 'No se encontraron datos de la tienda' }, { status: 404 });
+    }
+
+    switch (query.toLowerCase()) {
+      case 'dirección':
+      case 'direccion':
+        return NextResponse.json({
+          response: `Nuestra dirección es: ${StoreData.address}`,
+          embed: `https://www.google.com/maps?q=${encodeURIComponent(StoreData.address)}`,
+        });
+
+      case 'teléfono':
+      case 'telefono':
+        return NextResponse.json({
+          response: `Nuestro teléfono es:`,
+          clickable: `tel:${StoreData.phone}`,
+        });
+
+      case 'horarios':
+      case 'abiertos':
+      case 'abierto':
+        const status = isStoreOpen(StoreData.opening);
+        return NextResponse.json({ response: status.message });
+
+      default:
+        return NextResponse.json({
+          error: 'Consulta no válida. Por favor, pregunta por dirección, teléfono o si estamos abiertos.',
+        });
+    }
+  } catch (error) {
+    console.error('Error al obtener datos de la tienda:', error);
+    return NextResponse.json({ error: 'Ocurrió un error al procesar tu solicitud' }, { status: 500 });
+  }
+}
