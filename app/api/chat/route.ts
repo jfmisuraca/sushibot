@@ -236,9 +236,9 @@ function isStoreOpen(opening: string): { open: boolean; message: string } {
 async function handleGetInfo(request: Request) {
   try {
     const { query } = Object.fromEntries(new URL(request.url).searchParams);
-    const StoreData = await prisma.StoreData.findFirst();
+    const storeData = await prisma.storeData.findFirst();
 
-    if (!StoreData) {
+    if (!storeData) {
       return NextResponse.json({ error: 'No se encontraron datos de la tienda' }, { status: 404 });
     }
 
@@ -246,21 +246,21 @@ async function handleGetInfo(request: Request) {
       case 'dirección':
       case 'direccion':
         return NextResponse.json({
-          response: `Nuestra dirección es: ${StoreData.address}`,
-          embed: `https://www.google.com/maps?q=${encodeURIComponent(StoreData.address)}`,
+          response: `Nuestra dirección es: ${storeData.address}`,
+          embed: `https://www.google.com/maps?q=${encodeURIComponent(storeData.address)}`,
         });
 
       case 'teléfono':
       case 'telefono':
         return NextResponse.json({
           response: `Nuestro teléfono es:`,
-          clickable: `tel:${StoreData.phone}`,
+          clickable: `tel:${storeData.phone}`,
         });
 
       case 'horarios':
       case 'abiertos':
       case 'abierto':
-        const status = isStoreOpen(StoreData.opening);
+        const status = isStoreOpen(storeData.opening);
         return NextResponse.json({ response: status.message });
 
       default:
