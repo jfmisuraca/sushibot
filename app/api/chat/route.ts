@@ -233,7 +233,7 @@ function isStoreOpen(opening: string): { open: boolean; message: string } {
   return { open: false, message: `Estamos cerrados, abrimos a las ${openingTime}` };
 }
 
-export async function handleGetInfo(request: Request) {
+async function handleGetInfo(request: Request) {
   try {
     const { query } = Object.fromEntries(new URL(request.url).searchParams);
     const StoreData = await prisma.StoreData.findFirst();
