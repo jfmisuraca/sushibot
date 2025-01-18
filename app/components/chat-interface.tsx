@@ -21,19 +21,19 @@ export default function ChatInterface() {
   }
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages]);
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
-    }
-  };
+    setTimeout(() => {
+      scrollToBottom();
+    }, 0);
+  }, [messages])
 
   const hideKeyboard = () => {
     if (textareaRef.current) {
       textareaRef.current.blur();
+    }
+  }; const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
     }
   };
 
@@ -44,6 +44,7 @@ export default function ChatInterface() {
     const userMessage = input.trim()
     setInput('')
     setIsLoading(true)
+    hideKeyboard();
 
     // Add user message to chat
     setMessages(prev => [...prev, { role: 'user', content: userMessage }])
@@ -66,10 +67,6 @@ export default function ChatInterface() {
 
       // Add assistant response to chat
       setMessages(prev => [...prev, { role: 'assistant', content: data.response }])
-
-      if (window.innerHeight < document.body.scrollHeight) {
-        hideKeyboard();
-      }
     } catch (error) {
       console.error('Error:', error)
       setMessages(prev => [...prev, {
@@ -126,6 +123,7 @@ export default function ChatInterface() {
             onKeyUp={handleKeyPress}
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            enterKeyHint="send"
           />
           <button type="submit" className="send-button" disabled={isLoading}>
             <Send className="icon" />
