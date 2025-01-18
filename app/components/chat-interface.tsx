@@ -14,6 +14,7 @@ export default function ChatInterface() {
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -22,6 +23,19 @@ export default function ChatInterface() {
   useEffect(() => {
     scrollToBottom()
   }, [messages]);
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
+
+  const hideKeyboard = () => {
+    if (textareaRef.current) {
+      textareaRef.current.blur();
+    }
+  };
 
   async function handleSubmit(e: React.FormEvent | React.KeyboardEvent) {
     e.preventDefault()
@@ -52,6 +66,10 @@ export default function ChatInterface() {
 
       // Add assistant response to chat
       setMessages(prev => [...prev, { role: 'assistant', content: data.response }])
+
+      if (window.innerHeight < document.body.scrollHeight) {
+        hideKeyboard();
+      }
     } catch (error) {
       console.error('Error:', error)
       setMessages(prev => [...prev, {
@@ -62,13 +80,6 @@ export default function ChatInterface() {
       setIsLoading(false)
     }
   }
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
-    }
-  };
 
   return (
     <div className="chat-card">
@@ -108,6 +119,7 @@ export default function ChatInterface() {
       <div className="chat-footer">
         <form onSubmit={handleSubmit} className="chat-form">
           <textarea
+            ref={textareaRef}
             className="chat-input"
             placeholder="Escribe tu mensaje aquí..."
             autoFocus
