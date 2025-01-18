@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Bot, Send, User } from 'lucide-react'
+import { Bot, Send, User, Sun, Moon } from 'lucide-react'
+import { useTheme } from '../contexts/ThemeContext'
 import '../../styles/chat.css'
 
 interface Message {
@@ -15,15 +16,14 @@ export default function ChatInterface() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const { theme, toggleTheme } = useTheme()
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
   useEffect(() => {
-    setTimeout(() => {
-      scrollToBottom();
-    }, 0);
+    scrollToBottom();
   }, [messages])
 
   const hideKeyboard = () => {
@@ -32,10 +32,10 @@ export default function ChatInterface() {
     }
   }; const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
+      e.preventDefault()
+      handleSubmit(e)
     }
-  };
+  }
 
   async function handleSubmit(e: React.FormEvent | React.KeyboardEvent) {
     e.preventDefault()
@@ -44,7 +44,7 @@ export default function ChatInterface() {
     const userMessage = input.trim()
     setInput('')
     setIsLoading(true)
-    hideKeyboard();
+    hideKeyboard()
 
     // Add user message to chat
     setMessages(prev => [...prev, { role: 'user', content: userMessage }])
@@ -82,6 +82,9 @@ export default function ChatInterface() {
     <div className="chat-card">
       <div className="chat-header">
         <h1 className="chat-title">SushiBot</h1>
+        <button onClick={toggleTheme} className="theme-toggle">
+          {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+        </button>
       </div>
       <div className="chat-content">
         <div className="messages-container">
@@ -105,7 +108,7 @@ export default function ChatInterface() {
             ))}
             {isLoading && (
               <div className="loading">
-                <Bot className="icon" />
+                <Bot size={20} className="icon" />
                 <span>Escribiendo...</span>
               </div>
             )}
@@ -125,6 +128,7 @@ export default function ChatInterface() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               enterKeyHint="send"
+              rows={1}
             />
             <button type="submit" className="send-button" disabled={isLoading}>
               <Send className="icon" />

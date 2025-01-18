@@ -1,4 +1,5 @@
-import './globals.css'
+import { ThemeProvider } from '@/app/contexts/ThemeContext'
+import '@/styles/globals.css'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -20,7 +21,7 @@ export default function RootLayout({
         <meta name="description" content="Bot de pedidos de sushi" />
         <title>SushiBot</title>
       </head>
-      <body>{children}</body>
+      <body><ThemeProvider>{children}</ThemeProvider></body>
     </html>
   )
 }

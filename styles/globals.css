@@ -1,0 +1,46 @@
+:root {
+  --background: #ffffff;
+  --foreground: #000000;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f4f6;
+  --secondary-foreground: #1f2937;
+  --accent: #60a5fa;
+  --accent-foreground: #ffffff;
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #3b82f6;
+}
+
+.dark {
+  --background: #1f2937;
+  --foreground: #ffffff;
+  --primary: #60a5fa;
+  --primary-foreground: #1f2937;
+  --secondary: #374151;
+  --secondary-foreground: #e5e7eb;
+  --accent: #3b82f6;
+  --accent-foreground: #1f2937;
+  --muted: #374151;
+  --muted-foreground: #9ca3af;
+  --card: #1f2937;
+  --card-foreground: #ffffff;
+  --border: #374151;
+  --input: #374151;
+  --ring: #60a5fa;
+}
+
+body {
+  background: var(--muted);
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: var(--foreground);
+}
+
+* {
+  box-sizing: border-box;
+}
