@@ -115,20 +115,22 @@ export default function ChatInterface() {
       </div>
       <div className="chat-footer">
         <form onSubmit={handleSubmit} className="chat-form">
-          <textarea
-            ref={textareaRef}
-            className="chat-input"
-            placeholder="Escribe tu mensaje aquí..."
-            autoFocus
-            onKeyUp={handleKeyPress}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            enterKeyHint="send"
-          />
-          <button type="submit" className="send-button" disabled={isLoading}>
-            <Send className="icon" />
-            <span className="sr-only">Enviar mensaje</span>
-          </button>
+          <div className="input-wrapper">
+            <textarea
+              ref={textareaRef}
+              className="chat-input"
+              placeholder="Escribe tu mensaje aquí..."
+              autoFocus
+              onKeyUp={handleKeyPress}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              enterKeyHint="send"
+            />
+            <button type="submit" className="send-button" disabled={isLoading}>
+              <Send className="icon" />
+              <span className="sr-only">Enviar mensaje</span>
+            </button>
+          </div>
         </form>
       </div>
     </div>
