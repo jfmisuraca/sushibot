@@ -26,7 +26,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const isNightInArgentina = () => {
       const argentinaTime = new Date().toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' })
       const hour = new Date(argentinaTime).getHours()
-      return hour >= 18 || hour < 6
+      return hour >= 20 || hour <= 6
     }
 
     const prefersDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
