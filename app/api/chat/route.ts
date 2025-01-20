@@ -103,8 +103,6 @@ export async function POST(req: Request) {
           return handleChangeOrder(functionArgs.order_id, functionArgs.new_quantity);
         case 'cancel_order':
           return handleCancelOrder(functionArgs.order_id);
-        case 'get_info':
-          return handleGetInfo(functionArgs.store_id);
         default:
           return NextResponse.json({ response: "I'm sorry, I couldn't process that request." });
       }
@@ -213,63 +211,3 @@ async function handleCancelOrder(orderId: string) {
   return NextResponse.json({ response: `Tu pedido de ${order.quantity} ${order.product.name} fue cancelado.` });
 }
 
-function isStoreOpen(opening: string): { open: boolean; message: string } {
-  const [openingTime, closingTime] = opening.split('-').map((time) => time.trim());
-  const now = new Date();
-  const currentHour = now.getHours();
-  const currentMinutes = now.getMinutes();
-
-  // Convertir horas de apertura/cierre a minutos del día
-  const [openingHour, openingMinutes] = openingTime.split(':').map(Number);
-  const [closingHour, closingMinutes] = closingTime.split(':').map(Number);
-
-  const openingInMinutes = openingHour * 60 + openingMinutes;
-  const closingInMinutes = closingHour * 60 + closingMinutes;
-  const currentInMinutes = currentHour * 60 + currentMinutes;
-
-  if (currentInMinutes >= openingInMinutes && currentInMinutes < closingInMinutes) {
-    return { open: true, message: `Estamos abiertos hasta las ${closingTime}` };
-  }
-  return { open: false, message: `Estamos cerrados, abrimos a las ${openingTime}` };
-}
-
-async function handleGetInfo(request: Request) {
-  try {
-    const { query } = Object.fromEntries(new URL(request.url).searchParams);
-    const storeData = await prisma.storeData.findFirst();
-
-    if (!storeData) {
-      return NextResponse.json({ error: 'No se encontraron datos de la tienda' }, { status: 404 });
-    }
-
-    switch (query.toLowerCase()) {
-      case 'dirección':
-      case 'direccion':
-        return NextResponse.json({
-          response: `Nuestra dirección es: ${storeData.address}`,
-          embed: `https://www.google.com/maps?q=${encodeURIComponent(storeData.address)}`,
-        });
-
-      case 'teléfono':
-      case 'telefono':
-        return NextResponse.json({
-          response: `Nuestro teléfono es:`,
-          clickable: `tel:${storeData.phone}`,
-        });
-
-      case 'horarios':
-      case 'abiertos':
-      case 'abierto':
-        const status = isStoreOpen(storeData.opening);
-        return NextResponse.json({ response: status.message });
-
-      default:
-        return NextResponse.json({
-          error: 'Consulta no válida. Por favor, pregunta por dirección, teléfono o si estamos abiertos.',
-        });
-    }
-  } catch (error) {
-    console.error('Error al obtener datos de la tienda:', error);
-    return NextResponse.json({ error: 'Ocurrió un error al procesar tu solicitud' }, { status: 500 });
-  }
-}

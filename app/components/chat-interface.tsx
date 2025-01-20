@@ -1,41 +1,37 @@
-"use client"
+'use client'
 
-import { useState, useRef, useEffect } from "react"
-import { Bot, Send, User, Sun, Moon } from "lucide-react"
-import { useTheme } from "../contexts/ThemeContext"
+import { useState, useEffect, useRef } from 'react'
+import { Bot, Send, User, Sun, Moon } from 'lucide-react'
+import { useTheme } from '../contexts/ThemeContext'
 import "@/styles/chat.css"
 
 interface Message {
-  role: "user" | "assistant"
+  role: 'user' | 'assistant'
   content: string
 }
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([])
-  const [input, setInput] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { theme, toggleTheme } = useTheme()
 
   const scrollToBottom = () => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
   useEffect(() => {
-    scrollToBottom()
+    scrollToBottom();
   }, [messages])
 
-  useEffect(() => {
+  const hideKeyboard = () => {
     if (textareaRef.current) {
-      textareaRef.current.focus()
+      textareaRef.current.blur();
     }
-  }, [])
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+  }; const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSubmit(e)
     }
@@ -46,91 +42,98 @@ export default function ChatInterface() {
     if (!input.trim() || isLoading) return
 
     const userMessage = input.trim()
-    setInput("")
+    setInput('')
     setIsLoading(true)
+    hideKeyboard()
 
-    setMessages((prev) => [...prev, { role: "user", content: userMessage }])
+    setMessages(prev => [...prev, { role: 'user', content: userMessage }])
+    setInput('')
 
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
+      const response = await fetch('/api/chat', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ message: userMessage }),
       })
 
       if (!response.ok) {
-        throw new Error("Failed to send message")
+        throw new Error('Failed to send message')
       }
 
       const data = await response.json()
 
-      setMessages((prev) => [...prev, { role: "assistant", content: data.response }])
+      setMessages(prev => [...prev, { role: 'assistant', content: data.response }])
     } catch (error) {
-      console.error("Error:", error)
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: "Lo siento, hubo un error al procesar tu mensaje.",
-        },
-      ])
+      console.error('Error:', error)
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Lo siento, hubo un error al procesar tu mensaje.'
+      }])
     } finally {
       setIsLoading(false)
-      if (textareaRef.current) {
-        textareaRef.current.focus()
-      }
     }
   }
 
   return (
-    <div className="chat-container">
-      <div className="chat-card">
-        <div className="chat-header">
-          <h1 className="chat-title">SushiBot</h1>
-          <button onClick={toggleTheme} className="theme-toggle">
-            {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
-          </button>
-        </div>
-        <div className="chat-content">
-          <div className="messages-container">
-            <div className="message-list">
-              {messages.map((message, index) => (
-                <div key={index} className={`message-wrapper ${message.role}`}>
-                  <div className="avatar">{message.role === "assistant" ? <Bot size={20} /> : <User size={20} />}</div>
-                  <div className={`message ${message.role}`} dangerouslySetInnerHTML={{ __html: message.content }} />
+    <div className="chat-card">
+      <div className="chat-header">
+        <h1 className="chat-title">SushiBot</h1>
+        <button onClick={toggleTheme} className="theme-toggle">
+          {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+        </button>
+      </div>
+      <div className="chat-content">
+        <div className="messages-container">
+          <div className="message-list">
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={`message-wrapper ${message.role}`}
+              >
+                <div className="avatar">
+                  {message.role === 'assistant' ? (
+                    <Bot className="icon" />
+                  ) : (
+                    <User className="icon" />
+                  )}
                 </div>
-              ))}
-              {isLoading && (
-                <div className="loading">
-                  <Bot size={20} className="icon" />
-                  <span>Escribiendo...</span>
+                <div className={`message ${message.role}`}>
+                  {message.content}
                 </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
+              </div>
+            ))}
+            {isLoading && (
+              <div className="loading">
+                <Bot size={20} className="icon" />
+                <span>Escribiendo...</span>
+              </div>
+            )}
           </div>
+          <div ref={messagesEndRef} />
         </div>
-        <div className="chat-footer">
-          <form onSubmit={handleSubmit} className="chat-form">
-            <div className="input-wrapper">
-              <textarea
-                ref={textareaRef}
-                className="chat-input"
-                placeholder="Escribe tu mensaje aquí..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyUp={handleKeyPress}
-                rows={1}
-              />
-              <button type="submit" className="send-button" disabled={isLoading}>
-                <Send />
-                <span className="sr-only">Enviar mensaje</span>
-              </button>
-            </div>
-          </form>
-        </div>
+      </div>
+      <div className="chat-footer">
+        <form onSubmit={handleSubmit} className="chat-form">
+          <div className="input-wrapper">
+            <textarea
+              ref={textareaRef}
+              className="chat-input"
+              placeholder="Escribe tu mensaje aquí..."
+              autoFocus
+              onKeyUp={handleKeyPress}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              enterKeyHint="send"
+              rows={1}
+            />
+            <button type="submit" className="send-button" disabled={isLoading}>
+              <Send className="icon" />
+              <span className="sr-only">Enviar mensaje</span>
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   )
