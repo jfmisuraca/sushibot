@@ -79,7 +79,7 @@ export async function handleCreateOrder(orderRequest: OrderRequest) {
 
     const order = await prisma.order.create({
       data: {
-        items: orderRequest.items,
+        items: orderRequest.items as any,
         total,
         status: 'pending'
       }
