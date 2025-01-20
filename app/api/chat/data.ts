@@ -8,7 +8,58 @@ export const preloadedBoxes: Box[] = [
     contents: ["Nigiri de salmón", "Maki de pepino", "Temaki de atún", "Uramaki de aguacate"],
     availability: "disponible",
   },
-  // ... resto de los boxes
+  {
+    name: "Box Mediana",
+    price: 99.16,
+    description: "Perfecta para compartir, incluye 8 piezas variadas.",
+    contents: [
+      "Nigiri de salmón",
+      "Maki de pepino",
+      "Temaki de atún",
+      "Uramaki de aguacate",
+      "Sashimi de salmón",
+      "Nigiri de camarón",
+      "Maki de atún",
+      "Temaki de vegetales",
+    ],
+    availability: "disponible",
+  },
+  {
+    name: "Box Grande",
+    price: 169.89,
+    description: "Un festín para varios, incluye 12 piezas variadas.",
+    contents: [
+      "Nigiri de salmón",
+      "Maki de pepino",
+      "Temaki de atún",
+      "Uramaki de aguacate",
+      "Sashimi de salmón",
+      "Nigiri de camarón",
+      "Maki de atún",
+      "Temaki de vegetales",
+      "Nigiri de anguila",
+      "Uramaki de salmón",
+      "Sashimi de atún",
+      "Maki de camarón",
+    ],
+    availability: "disponible",
+  },
+  {
+    name: "Box Vegana (Mediana)",
+    price: 103.62,
+    description: "La mejor opción para los amantes de lo vegano, incluye 8 piezas veganas.",
+    contents: [
+      "Maki de pepino",
+      "Uramaki de aguacate",
+      "Temaki de vegetales",
+      "Nigiri de tofu",
+      "Maki de zanahoria",
+      "Uramaki de espárragos",
+      "Temaki de mango",
+      "Nigiri de berenjena",
+    ],
+    availability: "disponible",
+  }
 ]
 
 export const storeInfo = {

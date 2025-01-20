@@ -6,25 +6,22 @@ export interface Box {
   availability: "disponible" | "no disponible"
 }
 
+export interface StoreHours {
+  weekdays: { open: string; close: string }
+  weekends: { open: string; close: string }
+}
+
 export interface StoreInfo {
   address: string
   phone: string
-  hours: {
-    day: string
-    open: string
-    close: string
-  }[]
+  hours: StoreHours
   isOpen: boolean
 }
 
-export interface OrderItem {
-  boxName: string
-  quantity: number
-}
-
 export interface OrderRequest {
-  items?: OrderItem[]
-  boxName?: string
-  quantity?: number
-  confirm?: boolean | string
+  items: Array<{
+    boxName: string
+    quantity: number
+  }>
+  confirm?: boolean
 } 

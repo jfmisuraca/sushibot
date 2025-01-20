@@ -15,20 +15,17 @@ model ChatResponse {
 
 model Box {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  name         String
+  name         String   @unique
   description  String
   price        Float
   contents     String[]
-  availability String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  availability String   @default("disponible")
 }
 
 model Store {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  address   String
-  phone     String
-  hours     Json
-  isOpen    Boolean
-  createdAt DateTime @default(now())
+  id      String  @id @default(auto()) @map("_id") @db.ObjectId
+  address String
+  phone   String
+  hours   Json
+  isOpen  Boolean
 }

@@ -3,7 +3,7 @@ import openai from "../../../lib/openai"
 import { handleQueryBoxes, handleGetStoreInfo, handleGetLocation, handleGetPhone, handleCreateOrder } from "./handlers"
 
 export async function GET() {
-  return NextResponse.json({ status: "OK" })
+  return new Response(JSON.stringify({ status: "OK" }))
 }
 
 export async function POST(req: Request) {
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
 - Box Grande ($169.89): 12 piezas variadas
 - Box Vegana (Mediana) ($103.62): 8 piezas veganas
 
-NO INVENTES otros boxes ni precios. Para pedidos, cuando el usuario confirma con 'sí', 'si' o similar, debés usar create_order con confirm=true. Tus clientes son argentinos, tenés que hablarles con voseo. Sólo podés usar información de la base de datos.`,
+NO INVENTES otros boxes ni precios. Tus clientes son argentinos, tenés que hablarles con voseo. Sólo podés usar información de la base de datos.`,
         },
         { role: "user", content: message },
       ],
@@ -125,24 +125,27 @@ NO INVENTES otros boxes ni precios. Para pedidos, cuando el usuario confirma con
         case "create_order":
           return handleCreateOrder(args)
         default:
-          return NextResponse.json({
-            response: "Lo siento, no pude procesar esa solicitud.",
-          })
+          return new Response(JSON.stringify({
+            response: "Lo siento, no pude procesar esa solicitud."
+          }))
       }
     }
 
-    return NextResponse.json({
+    if (!assistantMessage.tool_calls) {
+      return new Response(JSON.stringify({
+        response: assistantMessage.content || "Lo siento, no pude procesar esa solicitud."
+      }))
+    }
+
+    return new Response(JSON.stringify({
       response: assistantMessage.content || "Lo siento, no pude procesar esa solicitud.",
-    })
+    }), { status: 500 })
   } catch (error) {
     console.error("Error detallado:", error)
-    return NextResponse.json(
-      {
-        response: "Lo siento, hubo un error al procesar tu solicitud.",
-        error: error instanceof Error ? error.message : "Error desconocido",
-      },
-      { status: 500 },
-    )
+    return new Response(JSON.stringify({
+      response: "Lo siento, hubo un error al procesar tu solicitud.",
+      error: error instanceof Error ? error.message : "Error desconocido"
+    }), { status: 500 })
   }
 }
 
