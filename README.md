@@ -35,12 +35,7 @@ MONGODB_URI=tu_uri_de_mongodb
 OPENAI_API_KEY=tu_api_key_de_openai
 ```
 
-5. Ejecuta la migración de la base de datos:
-```bash
-npm run seed
-```
-
-6. Inicia el servidor de desarrollo:
+5. Inicia el servidor de desarrollo:
 ```bash
 npm run dev
 ```
