@@ -143,7 +143,6 @@ export default function ChatInterface() {
               onKeyUp={handleKeyPress}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              enterKeyHint="send"
               rows={1}
             />
             <button type="submit" className="send-button" disabled={isLoading}>
