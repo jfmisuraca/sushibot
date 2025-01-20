@@ -54,35 +54,24 @@ export async function handleCreateOrder(orderRequest: OrderRequest) {
       return createResponse("No se especificaron items para el pedido.", 400)
     }
 
-    // Validar que los items sean un array válido
     if (!Array.isArray(orderRequest.items)) {
       return createResponse("Formato de pedido inválido", 400)
     }
 
-    // Validar cada item del pedido
     for (const item of orderRequest.items) {
       const box = preloadedBoxes.find(b => b.name === item.boxName)
-      
-      if (!box) {
-        return createResponse(`Box no encontrado: ${item.boxName}`, 400)
-      }
-      
-      if (item.quantity <= 0) {
-        return createResponse(`Cantidad inválida para ${item.boxName}`, 400)
-      }
+      if (!box) return createResponse(`Box no encontrado: ${item.boxName}`, 400)
+      if (item.quantity <= 0) return createResponse(`Cantidad inválida para ${item.boxName}`, 400)
     }
 
     const total = orderRequest.items.reduce((sum, item) => {
       const box = preloadedBoxes.find(b => b.name === item.boxName)
       return sum + (box?.price || 0) * item.quantity
     }, 0)
-
-    // Generar número de orden aleatorio de 4 dígitos
-    const orderNumber = Math.floor(1000 + Math.random() * 9000)
     
     const order = await prisma.order.create({
       data: {
-        items: orderRequest.items as any,
+        items: orderRequest.items,
         total,
         status: 'pending'
       }
@@ -93,7 +82,7 @@ export async function handleCreateOrder(orderRequest: OrderRequest) {
       .join(", ")
 
     return createResponse(
-      `¡Gracias! Tu pedido #${orderNumber} de ${orderDetails} (Total: $${total.toFixed(2)}) ha sido registrado.`
+      `¡Gracias! Tu pedido de ${orderDetails} (Total: $${total.toFixed(2)}) ha sido registrado.`
     )
   } catch (error) {
     console.error('Error en handleCreateOrder:', error)
