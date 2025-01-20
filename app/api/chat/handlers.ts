@@ -77,16 +77,18 @@ export async function handleCreateOrder(orderRequest: OrderRequest) {
       return sum + (box?.price || 0) * item.quantity
     }, 0)
 
+    // Obtener siguiente número de orden
+    const counter = await prisma.counter.upsert({
+      where: { name: 'orderNumber' },
+      update: { value: { increment: 1 } },
+      create: { name: 'orderNumber', value: 1 }
+    })
+
     const order = await prisma.order.create({
       data: {
         items: orderRequest.items as any,
         total,
         status: 'pending'
-      },
-      select: {
-        orderNumber: true,
-        items: true,
-        total: true
       }
     })
 
@@ -95,7 +97,7 @@ export async function handleCreateOrder(orderRequest: OrderRequest) {
       .join(", ")
 
     return createResponse(
-      `¡Gracias! Tu pedido #${order.orderNumber} de ${orderDetails} (Total: $${total.toFixed(2)}) ha sido registrado.`
+      `¡Gracias! Tu pedido #${counter.value} de ${orderDetails} (Total: $${total.toFixed(2)}) ha sido registrado.`
     )
   } catch (error) {
     console.error('Error en handleCreateOrder:', error)
