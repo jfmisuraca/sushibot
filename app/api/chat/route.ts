@@ -1,293 +1,275 @@
-import { NextResponse } from "next/server"
-import openai from "@/lib/openai"
-import { PrismaClient } from "@prisma/client"
+import openai from '@/lib/openai';
+import { NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient()
-
-const INFORMACION_TIENDA = {
-  direccion: "123 Sushi Street, Sushi City, SC 12345",
-  telefono: "+1234567890",
-  horario: "Lunes a Domingo: 11:00 AM - 10:00 PM",
-}
+const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
+  const { message } = await req.json();
+
   try {
-    const { message } = await req.json()
-
-    // Revisar preguntas sobre la tienda
-    if (message.toLowerCase().includes("dirección") || message.toLowerCase().includes("ubicación")) {
-      return NextResponse.json({
-        response: `Nuestra tienda está ubicada en: ${INFORMACION_TIENDA.direccion}
-
-        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.215707164939!2d-73.98823495118787!3d40.74881737922642!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0:0x0!2zMzTCsDQ0JzU1LjciTiA3M8KwNTknMTcuNiJX!5e0!3m2!1ses!2s!4v1633059402833!5m2!1ses!2s" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>`,
-      })
-    }
-
-    if (message.toLowerCase().includes("teléfono")) {
-      return NextResponse.json({ response: `Puedes contactarnos al teléfono: ${INFORMACION_TIENDA.telefono}` })
-    }
-
-    if (message.toLowerCase().includes("horario")) {
-      return NextResponse.json({ response: `Nuestro horario es: ${INFORMACION_TIENDA.horario}` })
-    }
-
-    // OpenAI integration
     const chatCompletion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o-mini",
       messages: [
-        {
-          role: "system",
-          content:
-            "Eres un asistente útil para un restaurante de sushi. Puedes ayudar con consultas sobre productos, verificar disponibilidad, realizar pedidos y cambiar o cancelar pedidos.",
-        },
-        { role: "user", content: message },
+        { role: "system", content: "Sos un asistente de ayuda para un restaurante de sushi. Podés consultar productos (mostrándolos en forma de lista, no uno detrás del otro), verificar su disponibilidad, realizar pedidos, cambiar o cancelar pedidos. Tus clientes son argentinos, tenés que hablarles con voseo. Sólo podés usar información de la base de datos." },
+        { role: "user", content: message }
       ],
-      tools: [
+      functions: [
         {
-          type: "function",
-          function: {
-            name: "query_boxes",
-            description: "Consultar cajas de sushi pre-armadas disponibles",
-            parameters: {
-              type: "object",
-              properties: {},
-            },
+          name: "query_products",
+          description: "Query available products",
+          parameters: {
+            type: "object",
+            properties: {},
           },
         },
         {
-          type: "function",
-          function: {
-            name: "check_availability",
-            description: "Verificar disponibilidad de una caja de sushi específica",
-            parameters: {
-              type: "object",
-              properties: {
-                box_name: { type: "string" },
-              },
-              required: ["box_name"],
+          name: "check_availability",
+          description: "Check availability of a specific product",
+          parameters: {
+            type: "object",
+            properties: {
+              product_name: { type: "string" },
             },
+            required: ["product_name"],
           },
         },
         {
-          type: "function",
-          function: {
-            name: "place_order",
-            description: "Realizar un pedido de una caja de sushi",
-            parameters: {
-              type: "object",
-              properties: {
-                box_name: { type: "string" },
-                quantity: { type: "integer" },
-              },
-              required: ["box_name", "quantity"],
+          name: "place_order",
+          description: "Place an order for a product",
+          parameters: {
+            type: "object",
+            properties: {
+              product_name: { type: "string" },
+              quantity: { type: "integer" },
             },
+            required: ["product_name", "quantity"],
           },
         },
         {
-          type: "function",
-          function: {
-            name: "change_order",
-            description: "Cambiar un pedido existente",
-            parameters: {
-              type: "object",
-              properties: {
-                order_id: { type: "string" },
-                new_quantity: { type: "integer" },
-              },
-              required: ["order_id", "new_quantity"],
+          name: "change_order",
+          description: "Change an existing order",
+          parameters: {
+            type: "object",
+            properties: {
+              order_id: { type: "string" },
+              new_quantity: { type: "integer" },
             },
+            required: ["order_id", "new_quantity"],
           },
         },
         {
-          type: "function",
-          function: {
-            name: "cancel_order",
-            description: "Cancelar un pedido existente",
-            parameters: {
-              type: "object",
-              properties: {
-                order_id: { type: "string" },
-              },
-              required: ["order_id"],
+          name: "cancel_order",
+          description: "Cancel an existing order",
+          parameters: {
+            type: "object",
+            properties: {
+              order_id: { type: "string" },
+            },
+            required: ["order_id"],
+          },
+        },
+        {
+          name: "get_info",
+          description: "Get information about the store",
+          parameters: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              address: { type: "string" },
+              phone: { type: "string" },
+              email: { type: "string" },
+              opening: { type: "string" },
             },
           },
         },
       ],
-    })
+    });
 
-    const assistantMessage = chatCompletion.choices[0].message
+    const assistantMessage = chatCompletion.choices[0].message;
 
-    if (assistantMessage.tool_calls) {
-      const functionCall = assistantMessage.tool_calls[0]
-      const functionName = functionCall.function.name
-      const functionArgs = JSON.parse(functionCall.function.arguments || "{}")
+    if (assistantMessage.function_call) {
+      const functionName = assistantMessage.function_call.name;
+      const functionArgs = JSON.parse(assistantMessage.function_call.arguments || '{}');
 
       switch (functionName) {
-        case "query_boxes":
-          return NextResponse.json({ response: await handleQueryBoxes() })
-        case "check_availability":
-          return NextResponse.json({ response: await handleCheckAvailability(functionArgs.box_name) })
-        case "place_order":
-          return NextResponse.json({ response: await handlePlaceOrder(functionArgs.box_name, functionArgs.quantity) })
-        case "change_order":
-          return NextResponse.json({
-            response: await handleChangeOrder(functionArgs.order_id, functionArgs.new_quantity),
-          })
-        case "cancel_order":
-          return NextResponse.json({ response: await handleCancelOrder(functionArgs.order_id) })
+        case 'query_products':
+          return handleQueryProducts();
+        case 'check_availability':
+          return handleCheckAvailability(functionArgs.product_name);
+        case 'place_order':
+          return handlePlaceOrder(functionArgs.product_name, functionArgs.quantity);
+        case 'change_order':
+          return handleChangeOrder(functionArgs.order_id, functionArgs.new_quantity);
+        case 'cancel_order':
+          return handleCancelOrder(functionArgs.order_id);
+        case 'get_info':
+          return handleGetInfo(functionArgs.store_id);
         default:
-          return NextResponse.json({ response: "Lo siento, no pude procesar esa solicitud." })
+          return NextResponse.json({ response: "I'm sorry, I couldn't process that request." });
       }
     } else {
-      return NextResponse.json({ response: assistantMessage.content })
+      return NextResponse.json({ response: assistantMessage.content });
     }
   } catch (error) {
-    console.error(error)
-    return NextResponse.json({ error: "Ocurrió un error al procesar la solicitud." }, { status: 500 })
+    console.error('Error processing request:', error);
+    return NextResponse.json({ response: "Lo sentimos, hubo un error al procesar tu solicitud." }, { status: 500 });
   }
 }
 
-async function handleQueryBoxes() {
-  const boxes = await prisma.box.findMany()
-  return boxes.map((box) => `${box.name}: $${box.price.toFixed(2)} - ${box.description}`).join("\n\n")
+async function handleQueryProducts() {
+  const products = await prisma.product.findMany();
+  const productList = products
+    .map(p => `- ${p.name}: $${p.price.toFixed(2)} - ${p.description} (${p.vegan ? 'Vegano' : 'No vegano'})`)
+    .join('\n');
+  return NextResponse.json({ response: `Aquí están nuestros productos disponibles:\n${productList}` });
 }
 
-async function handleCheckAvailability(boxName: string) {
-  const box = await prisma.box.findFirst({
-    where: { name: { contains: boxName, mode: "insensitive" } },
-    include: { products: true },
-  })
+async function handleCheckAvailability(productName: string) {
+  const product = await prisma.product.findFirst({
+    where: { name: { contains: productName, mode: 'insensitive' } }
+  });
 
-  if (box) {
-    const availableProducts = box.products.filter((product) => product.quantity > 0)
-    if (availableProducts.length === box.products.length) {
-      return `La caja ${box.name} está disponible.`
-    } else {
-      return `Lo siento, la caja ${box.name} no está disponible en este momento debido a que algunos productos están agotados.`
-    }
+  if (product) {
+    return NextResponse.json({ response: `Tenemos ${product.quantity} unidades de ${product.name} disponibles.` });
   } else {
-    return `Lo siento, no pudimos encontrar una caja llamada "${boxName}".`
+    return NextResponse.json({ response: `Lo siento, no pude encontrar el producto "${productName}".` });
   }
 }
 
-async function handlePlaceOrder(boxName: string, quantity: number) {
-  const box = await prisma.box.findFirst({
-    where: { name: { contains: boxName, mode: "insensitive" } },
-    include: { products: true },
-  })
+async function handlePlaceOrder(productName: string, quantity: number) {
+  const product = await prisma.product.findFirst({
+    where: { name: { contains: productName, mode: 'insensitive' } }
+  });
 
-  if (box) {
-    const availableProducts = box.products.filter((product) => product.quantity >= quantity)
-    if (availableProducts.length === box.products.length) {
-      const order = await prisma.order.create({
-        data: {
-          product: { connect: { id: box.products[0].id } },
-          quantity: quantity,
-        },
-      })
-      await Promise.all(
-        box.products.map((product) =>
-          prisma.product.update({
-            where: { id: product.id },
-            data: { quantity: { decrement: quantity } },
-          }),
-        ),
-      )
-      return `Tu pedido de ${quantity} ${box.name}(s) ha sido realizado con éxito. Tu número de pedido es ${order.id}.`
-    } else {
-      return `Lo siento, no tenemos suficiente stock para cumplir tu pedido de ${quantity} ${box.name}(s).`
+  if (product) {
+    if (quantity > product.quantity) {
+      return NextResponse.json({ response: `Lo siento, solo tenemos ${product.quantity} unidades de ${product.name} disponibles.` });
     }
+
+    const order = await prisma.order.create({
+      data: {
+        productId: product.id,
+        quantity
+      }
+    });
+    await prisma.product.update({
+      where: { id: product.id },
+      data: { quantity: product.quantity - quantity }
+    });
+    return NextResponse.json({ response: `Tu pedido de ${quantity} ${product.name} fue realizado con éxito con el número de orden ${order.id}. ¡Muchas gracias!` });
   } else {
-    return `Lo siento, no pudimos encontrar una caja llamada "${boxName}".`
+    return NextResponse.json({ response: `Lo siento, no pude encontrar el producto "${productName}".` });
   }
 }
 
 async function handleChangeOrder(orderId: string, newQuantity: number) {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    include: {
-      product: {
-        include: {
-          box: {
-            include: {
-              products: true,
-            },
-          },
-        },
-      },
-    },
-  })
+    include: { product: true }
+  });
 
   if (!order) {
-    return "No se encontró el pedido."
+    return NextResponse.json({ response: `Lo siento, no pude encontrar un pedido con el ID ${orderId}.` });
   }
 
-  const box = order.product.box
-
-  const availableProducts = await prisma.product.findMany({
-    where: { boxId: box.id, quantity: { gte: newQuantity - order.quantity } },
-  })
-
-  if (availableProducts.length === box.products.length) {
-    await prisma.order.update({
-      where: { id: orderId },
-      data: { quantity: newQuantity },
-    })
-
-    await Promise.all(
-      box.products.map((product) =>
-        prisma.product.update({
-          where: { id: product.id },
-          data: { quantity: { decrement: newQuantity - order.quantity } },
-        }),
-      ),
-    )
-
-    return `Tu pedido ha sido actualizado a ${newQuantity} ${box.name}(s).`
-  } else {
-    return `Lo siento, no hay suficientes productos disponibles para cambiar tu pedido a ${newQuantity} ${box.name}(s).`
+  if (newQuantity > order.product.quantity + order.quantity) {
+    return NextResponse.json({ response: `Lo siento, no tenemos suficiente stock. La cantidad máxima disponible es ${order.product.quantity + order.quantity}.` });
   }
+
+  await prisma.order.update({
+    where: { id: orderId },
+    data: { quantity: newQuantity }
+  });
+  await prisma.product.update({
+    where: { id: order.productId },
+    data: { quantity: order.product.quantity + order.quantity - newQuantity }
+  });
+  return NextResponse.json({ response: `Tu pedido ha sido actualizado a ${newQuantity} ${order.product.name}.` });
 }
 
 async function handleCancelOrder(orderId: string) {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    include: {
-      product: {
-        include: {
-          box: {
-            include: {
-              products: true,
-            },
-          },
-        },
-      },
-    },
-  })
+    include: { product: true }
+  });
 
   if (!order) {
-    return "No se encontró el pedido."
+    return NextResponse.json({ response: `Lo siento, no pude encontrar un pedido con el ID ${orderId}.` });
   }
 
-  if (order.status === "cancelled") {
-    return `El pedido con ID ${orderId} ya ha sido cancelado.`
+  if (order.status === 'cancelled') {
+    return NextResponse.json({ response: `El pedido con el ID ${orderId} ya fue cancelado.` });
   }
 
   await prisma.order.update({
     where: { id: orderId },
-    data: { status: "cancelled" },
-  })
-
-  await Promise.all(
-    order.product.box.products.map((product) =>
-      prisma.product.update({
-        where: { id: product.id },
-        data: { quantity: { increment: order.quantity } },
-      }),
-    ),
-  )
-
-  return `Tu pedido de ${order.quantity} ${order.product.box.name}(s) ha sido cancelado.`
+    data: { status: 'cancelled' }
+  });
+  await prisma.product.update({
+    where: { id: order.productId },
+    data: { quantity: { increment: order.quantity } }
+  });
+  return NextResponse.json({ response: `Tu pedido de ${order.quantity} ${order.product.name} fue cancelado.` });
 }
 
+function isStoreOpen(opening: string): { open: boolean; message: string } {
+  const [openingTime, closingTime] = opening.split('-').map((time) => time.trim());
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinutes = now.getMinutes();
 
+  // Convertir horas de apertura/cierre a minutos del día
+  const [openingHour, openingMinutes] = openingTime.split(':').map(Number);
+  const [closingHour, closingMinutes] = closingTime.split(':').map(Number);
+
+  const openingInMinutes = openingHour * 60 + openingMinutes;
+  const closingInMinutes = closingHour * 60 + closingMinutes;
+  const currentInMinutes = currentHour * 60 + currentMinutes;
+
+  if (currentInMinutes >= openingInMinutes && currentInMinutes < closingInMinutes) {
+    return { open: true, message: `Estamos abiertos hasta las ${closingTime}` };
+  }
+  return { open: false, message: `Estamos cerrados, abrimos a las ${openingTime}` };
+}
+
+async function handleGetInfo(request: Request) {
+  try {
+    const { query } = Object.fromEntries(new URL(request.url).searchParams);
+    const storeData = await prisma.storeData.findFirst();
+
+    if (!storeData) {
+      return NextResponse.json({ error: 'No se encontraron datos de la tienda' }, { status: 404 });
+    }
+
+    switch (query.toLowerCase()) {
+      case 'dirección':
+      case 'direccion':
+        return NextResponse.json({
+          response: `Nuestra dirección es: ${storeData.address}`,
+          embed: `https://www.google.com/maps?q=${encodeURIComponent(storeData.address)}`,
+        });
+
+      case 'teléfono':
+      case 'telefono':
+        return NextResponse.json({
+          response: `Nuestro teléfono es:`,
+          clickable: `tel:${storeData.phone}`,
+        });
+
+      case 'horarios':
+      case 'abiertos':
+      case 'abierto':
+        const status = isStoreOpen(storeData.opening);
+        return NextResponse.json({ response: status.message });
+
+      default:
+        return NextResponse.json({
+          error: 'Consulta no válida. Por favor, pregunta por dirección, teléfono o si estamos abiertos.',
+        });
+    }
+  } catch (error) {
+    console.error('Error al obtener datos de la tienda:', error);
+    return NextResponse.json({ error: 'Ocurrió un error al procesar tu solicitud' }, { status: 500 });
+  }
+}
