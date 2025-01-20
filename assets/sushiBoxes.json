@@ -1,0 +1,62 @@
+[
+    {
+      "name": "Box Chica",
+      "description": "Ideal para una persona, incluye 4 piezas variadas.",
+      "products": [
+        "Rollo California",
+        "Rollo de Kanikama",
+        "Rollo Philadelphia",
+        "Rollo de Atún Picante"
+      ],
+      "price": 32.24
+    },
+    {
+      "name": "Box Mediana",
+      "description": "Perfecta para compartir, incluye 8 piezas variadas.",
+      "products": [
+        "Rollo California",
+        "Rollo Dragón",
+        "Sashimi de Salmón",
+        "Rollo de Ensalada de Alga",
+        "Rollo de Camarón Tempura",
+        "Rollo Philadelphia",
+        "Rollo de Anguila",
+        "Rollo de Atún Picante"
+      ],
+      "price": 99.16
+    },
+    {
+      "name": "Box Grande",
+      "description": "Un festín para varios, incluye 12 piezas variadas.",
+      "products": [
+        "Rollo California",
+        "Rollo de Kanikama",
+        "Rollo Dragón",
+        "Sashimi de Salmón",
+        "Rollo de Camarón Tempura",
+        "Rollo Philadelphia",
+        "Rollo de Ensalada de Alga",
+        "Rollo de Anguila",
+        "Rollo de Atún Picante",
+        "Rollo de Pescado Blanco",
+        "Uramaki Tempura",
+        "Rollo de Cola Amarilla"
+      ],
+      "price": 169.89
+    },
+    {
+      "name": "Box Vegana (Mediana)",
+      "description": "La mejor opción para los amantes de lo vegano, incluye 8 piezas veganas.",
+      "products": [
+        "Rollo de Cola Amarilla",
+        "Uramaki Tempura",
+        "Rollo de Pepino y Mango",
+        "Rollo de Zanahoria y Palta",
+        "Rollo de Anguila",
+        "Rollo California",
+        "Rollo de Cola Amarilla",
+        "Uramaki Tempura"
+      ],
+      "price": 103.62
+    }
+  ]

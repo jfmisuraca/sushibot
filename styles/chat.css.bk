@@ -1,38 +1,39 @@
 :root {
-  --background: #ffffff;
-  --foreground: #000000;
-  --primary: #3b82f6;
+  --background: #e1e2e7;
+  --foreground: #1a1b26;
+  --primary: #7aa2f7;
   --primary-foreground: #ffffff;
-  --secondary: #f3f4f6;
-  --secondary-foreground: #1f2937;
-  --accent: #60a5fa;
+  --secondary: #c0caf5;
+  --secondary-foreground: #1a1b26;
+  --accent: #bb9af7;
   --accent-foreground: #ffffff;
-  --muted: #f3f4f6;
-  --muted-foreground: #6b7280;
+  --muted: #dcdfe4;
+  --muted-foreground: #4f5668;
   --card: #ffffff;
-  --card-foreground: #000000;
-  --border: #e5e7eb;
-  --input: #e5e7eb;
-  --ring: #3b82f6;
+  --card-foreground: #1a1b26;
+  --border: #a9b1d6;
+  --input: #c0caf5;
+  --ring: #7aa2f7;
 }
 
 .dark {
-  --background: #1f2937;
-  --foreground: #ffffff;
-  --primary: #60a5fa;
-  --primary-foreground: #1f2937;
-  --secondary: #374151;
-  --secondary-foreground: #e5e7eb;
-  --accent: #3b82f6;
-  --accent-foreground: #1f2937;
-  --muted: #374151;
-  --muted-foreground: #9ca3af;
-  --card: #1f2937;
-  --card-foreground: #ffffff;
-  --border: #374151;
-  --input: #374151;
-  --ring: #60a5fa;
+  --background: #1a1b26;
+  --foreground: #c0caf5;
+  --primary: #7aa2f7;
+  --primary-foreground: #1a1b26;
+  --secondary: #2e3440;
+  --secondary-foreground: #a9b1d6;
+  --accent: #bb9af7;
+  --accent-foreground: #1a1b26;
+  --muted: #1f2335;
+  --muted-foreground: #7c85a1;
+  --card: #24283b;
+  --card-foreground: #c0caf5;
+  --border: #3b4261;
+  --input: #3b4261;
+  --ring: #7aa2f7;
 }
+
 
 body {
   background-color: var(--background);
@@ -139,23 +140,6 @@ body {
   color: var(--primary-foreground);
 }
 
-.message img,
-.message iframe {
-  max-width: 100%;
-  height: auto;
-  border-radius: 8px;
-  margin-top: 10px;
-}
-
-.message a {
-  color: var(--primary);
-  text-decoration: underline;
-}
-
-.message a:hover {
-  text-decoration: none;
-}
-
 .loading {
   display: flex;
   align-items: center;
@@ -240,8 +224,7 @@ body {
 }
 
 @keyframes pulse {
-  0%,
-  100% {
+  0%, 100% {
     opacity: 1;
   }
   50% {
@@ -261,7 +244,7 @@ body {
 
   .chat-content {
     padding: 0.5rem;
-    padding-bottom: 80px; /* Add space for the fixed footer */
+    padding-bottom: 80px;
   }
 
   .chat-footer {
@@ -274,5 +257,4 @@ body {
     box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
   }
 }
-
 
