@@ -1,172 +1,201 @@
-import openai from '@/lib/openai';
-import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { NextResponse } from "next/server"
+import openai from "../../../lib/openai"
 
-const prisma = new PrismaClient();
+interface Box {
+  name: string
+  price: number
+  description: string
+  contents: string[]
+  availability: "disponible" | "no disponible"
+}
 
-interface StoreHours {
-  day: string;
-  open: string;
-  close: string;
+const preloadedBoxes: Box[] = [
+  {
+    name: "Box Chica",
+    price: 32.24,
+    description: "Ideal para una persona, incluye 4 piezas variadas.",
+    contents: ["Nigiri de salmón", "Maki de pepino", "Temaki de atún", "Uramaki de aguacate"],
+    availability: "disponible",
+  },
+  {
+    name: "Box Mediana",
+    price: 99.16,
+    description: "Perfecta para compartir, incluye 8 piezas variadas.",
+    contents: [
+      "Nigiri de salmón",
+      "Maki de pepino",
+      "Temaki de atún",
+      "Uramaki de aguacate",
+      "Sashimi de salmón",
+      "Nigiri de camarón",
+      "Maki de atún",
+      "Temaki de vegetales",
+    ],
+    availability: "disponible",
+  },
+  {
+    name: "Box Grande",
+    price: 169.89,
+    description: "Un festín para varios, incluye 12 piezas variadas.",
+    contents: [
+      "Nigiri de salmón",
+      "Maki de pepino",
+      "Temaki de atún",
+      "Uramaki de aguacate",
+      "Sashimi de salmón",
+      "Nigiri de camarón",
+      "Maki de atún",
+      "Temaki de vegetales",
+      "Nigiri de anguila",
+      "Uramaki de salmón",
+      "Sashimi de atún",
+      "Maki de camarón",
+    ],
+    availability: "disponible",
+  },
+  {
+    name: "Box Vegana (Mediana)",
+    price: 103.62,
+    description: "La mejor opción para los amantes de lo vegano, incluye 8 piezas veganas.",
+    contents: [
+      "Maki de pepino",
+      "Uramaki de aguacate",
+      "Temaki de vegetales",
+      "Nigiri de tofu",
+      "Maki de zanahoria",
+      "Uramaki de espárragos",
+      "Temaki de mango",
+      "Nigiri de berenjena",
+    ],
+    availability: "disponible",
+  },
+]
+
+interface StoreInfo {
+  address: string
+  phone: string
+  hours: {
+    day: string
+    open: string
+    close: string
+  }[]
+  isOpen: boolean
+}
+
+const storeInfo: StoreInfo = {
+  address: "Av. Corrientes 1234, Buenos Aires, Argentina",
+  phone: "+54 11 1234-5678",
+  hours: [
+    { day: "Lunes a Viernes", open: "11:00", close: "22:00" },
+    { day: "Sábados y Domingos", open: "12:00", close: "23:00" },
+  ],
+  isOpen: true,
+}
+
+export async function GET() {
+  return NextResponse.json({ status: "OK" })
 }
 
 export async function POST(req: Request) {
-  const { message } = await req.json();
-
   try {
+    const { message } = await req.json()
+
     const chatCompletion = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
         {
           role: "system",
-          content: "Sos un asistente de ayuda para un restaurante de sushi. Podés consultar productos (mostrándolos en forma de lista, no uno detrás del otro), verificar su disponibilidad, realizar pedidos, cambiar o cancelar pedidos, y brindar información sobre los horarios del local. Tus clientes son argentinos, tenés que hablarles con voseo. Sólo podés usar información de la base de datos."
+          content:
+            "Sos un asistente de ayuda para un restaurante de sushi. Podés consultar boxes de sushi (mostrándolos en forma de lista, no uno detrás del otro), verificar su disponibilidad, realizar pedidos, cambiar o cancelar pedidos, y brindar información sobre los horarios, dirección y teléfono del local. Tus clientes son argentinos, tenés que hablarles con voseo. Sólo podés usar información de la base de datos.",
         },
-        { role: "user", content: message }
+        { role: "user", content: message },
       ],
       tools: [
         {
           type: "function",
           function: {
-            name: "query_products",
-            description: "Query available products",
+            name: "query_boxes",
+            description: "Query available sushi boxes",
             parameters: {
               type: "object",
               properties: {},
             },
-          }
+          },
         },
         {
           type: "function",
           function: {
-            name: "get_info",
-            description: "Get information about store hours and current open/closed status",
+            name: "get_store_info",
+            description: "Get information about store hours, address, phone, and current open/closed status",
             parameters: {
               type: "object",
               properties: {},
             },
-          }
-        }
+          },
+        },
       ],
-    });
+    })
 
-    const assistantMessage = chatCompletion.choices[0].message;
+    const assistantMessage = chatCompletion.choices[0].message
 
     if (assistantMessage.tool_calls) {
-      const functionName = assistantMessage.tool_calls[0].function.name;
+      const functionName = assistantMessage.tool_calls[0].function.name
 
       switch (functionName) {
-        case 'query_products':
-          return await handleQueryProducts();
-        case 'get_info':
-          return await handleGetStoreInfo();
+        case "query_boxes":
+          return handleQueryBoxes()
+        case "get_store_info":
+          return handleGetStoreInfo()
         default:
           return NextResponse.json({
-            response: "Lo siento, no pude procesar esa solicitud."
-          });
+            response: "Lo siento, no pude procesar esa solicitud.",
+          })
       }
     }
 
     return NextResponse.json({
-      response: assistantMessage.content || "Lo siento, no pude procesar esa solicitud."
-    });
-
+      response: assistantMessage.content || "Lo siento, no pude procesar esa solicitud.",
+    })
   } catch (error) {
-    console.error('Error detallado:', error);
-    return NextResponse.json({
-      response: "Lo siento, hubo un error al procesar tu solicitud.",
-      error: error instanceof Error ? error.message : 'Error desconocido'
-    }, { status: 500 });
+    console.error("Error detallado:", error)
+    return NextResponse.json(
+      {
+        response: "Lo siento, hubo un error al procesar tu solicitud.",
+        error: error instanceof Error ? error.message : "Error desconocido",
+      },
+      { status: 500 },
+    )
   }
 }
 
-async function handleQueryProducts() {
-  try {
-    const products = await prisma.product.findMany({
-      select: {
-        name: true,
-        price: true,
-        quantity: true,
-        description: true
-      }
-    });
+function handleQueryBoxes() {
+  const boxList = preloadedBoxes
+    .map(
+      (box) =>
+        `- ${box.name}: $${box.price} (${box.availability})
+  Descripción: ${box.description}
+  Contiene: ${box.contents.join(", ")}`,
+    )
+    .join("\n\n")
 
-    if (!products || products.length === 0) {
-      return NextResponse.json({
-        response: "Lo siento, no hay productos disponibles en este momento."
-      });
-    }
-
-    const productList = products.map(p =>
-      `- ${p.name}: $${p.price} (${p.quantity} disponibles)`
-    ).join('\n');
-
-    return NextResponse.json({
-      response: `Estos son nuestros productos disponibles:\n${productList}`
-    });
-  } catch (error) {
-    console.error('Error al consultar productos:', error);
-    return NextResponse.json({
-      response: "Lo siento, hubo un error al consultar los productos.",
-      error: error instanceof Error ? error.message : 'Error desconocido'
-    }, { status: 500 });
-  }
+  return NextResponse.json({
+    response: `Estos son nuestros boxes disponibles:\n\n${boxList}`,
+  })
 }
 
-async function handleGetStoreInfo() {
-  try {
-    const storeInfo = await prisma.store.findFirst({
-      select: {
-        hours: true,
-        isOpen: true
-      }
-    });
+function handleGetStoreInfo() {
+  const { address, phone, hours, isOpen } = storeInfo
+  const hoursInfo = hours.map((h) => `${h.day}: ${h.open} - ${h.close}`).join("\n")
+  const openStatus = isOpen ? "Abierto" : "Cerrado"
 
-    if (!storeInfo) {
-      return NextResponse.json({
-        response: "Lo siento, no se pudo obtener información del local."
-      });
-    }
-
-    const now = new Date();
-    const currentDay = now.toLocaleDateString('es-AR', { weekday: 'long' }).toLowerCase();
-    const currentTime = now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
-
-    const todayHours = storeInfo.hours.find((h: StoreHours) => {
-      const days = h.day.toLowerCase();
-      return days.includes(currentDay) ||
-        (days.includes('lunes a viernes') && ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'].includes(currentDay)) ||
-        (days.includes('sábados y domingos') && ['sábado', 'domingo'].includes(currentDay));
-    });
-
-    if (!todayHours) {
-      return NextResponse.json({
-        response: "Lo siento, no tengo información sobre los horarios de hoy."
-      });
-    }
-
-    const isCurrentlyOpen = currentTime >= todayHours.open && currentTime <= todayHours.close;
-
-    if (isCurrentlyOpen) {
-      return NextResponse.json({
-        response: `¡Sí! Estamos abiertos ahora. Cerramos a las ${todayHours.close}hs.`
-      });
-    } else {
-      if (currentTime < todayHours.open) {
-        return NextResponse.json({
-          response: `En este momento estamos cerrados. Abrimos hoy a las ${todayHours.open}hs.`
-        });
-      } else {
-        const nextDay = storeInfo.hours[0];
-        return NextResponse.json({
-          response: `En este momento estamos cerrados. Abrimos mañana a las ${nextDay.open}hs.`
-        });
-      }
-    }
-  } catch (error) {
-    console.error('Error al obtener información del local:', error);
-    return NextResponse.json({
-      response: "Lo siento, hubo un error al obtener información del local.",
-      error: error instanceof Error ? error.message : 'Error desconocido'
-    }, { status: 500 });
-  }
+  return NextResponse.json({
+    response: `Información de la tienda:
+Dirección: ${address}
+Teléfono: ${phone}
+Horarios:
+${hoursInfo}
+Estado actual: ${openStatus}`,
+  })
 }
+
+

@@ -17,6 +17,8 @@ export default function ChatInterface() {
   const [isLoading, setIsLoading] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { theme, toggleTheme } = useTheme()
+  const [error, setError] = useState<string | null>(null)
+
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -52,6 +54,7 @@ export default function ChatInterface() {
     const userMessage = input.trim()
     setInput('')
     setIsLoading(true)
+    setError(null)
 
     setMessages(prev => [...prev, { role: 'user', content: userMessage }])
 
@@ -78,10 +81,11 @@ export default function ChatInterface() {
       setMessages(prev => [...prev, { role: 'assistant', content: data.response }])
     } catch (error) {
       console.error('Error detallado:', error)
+      setError(error instanceof Error ? error.message : "Error desconocido")
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: error instanceof Error 
-          ? `Error: ${error.message}` 
+        content: error instanceof Error
+          ? `Error: ${error.message}`
           : 'Lo siento, ocurrió un error al procesar tu mensaje. Por favor, intenta nuevamente.'
       }])
     } finally {
@@ -124,6 +128,7 @@ export default function ChatInterface() {
               </div>
             )}
           </div>
+          {error && <div className="error-message">Error: {error}</div>}
           <div ref={messagesEndRef} />
         </div>
       </div>
@@ -151,5 +156,6 @@ export default function ChatInterface() {
     </div>
   )
 }
+
 
 
