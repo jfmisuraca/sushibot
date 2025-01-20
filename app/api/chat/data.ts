@@ -1,39 +1,22 @@
-interface Box {
-  name: string
-  price: number
-  availability: string
-  description: string
-  contents: string[]
-}
-
-interface StoreHours {
-  day: string
-  open: string
-  close: string
-}
-
-interface StoreInfo {
-  hours: StoreHours[]
-  address: string
-  phone: string
-}
+import { Box, StoreInfo } from './types'
 
 export const preloadedBoxes: Box[] = [
   {
     name: "Box Chica",
     price: 32.24,
-    availability: "Disponible",
     description: "Ideal para una persona, incluye 4 piezas variadas.",
-    contents: ["Rollo California", "Rollo de Kanikama", "Rollo Philadelphia", "Rollo de Atún Picante"]
-  }
-  // ... otros boxes
+    contents: ["Nigiri de salmón", "Maki de pepino", "Temaki de atún", "Uramaki de aguacate"],
+    availability: "disponible",
+  },
+  // ... resto de los boxes
 ]
 
 export const storeInfo: StoreInfo = {
+  address: "Av. Corrientes 1234, Buenos Aires, Argentina",
+  phone: "+54 11 1234-5678",
   hours: [
-    { day: "Lunes a Viernes", open: "11:00", close: "23:00" },
-    { day: "Sábados y Domingos", open: "12:00", close: "23:00" }
+    { day: "Lunes a Viernes", open: "11:00", close: "22:00" },
+    { day: "Sábados y Domingos", open: "12:00", close: "23:00" },
   ],
-  address: "Av. Principal 123, Ciudad",
-  phone: "+54 11 1234-5678"
+  isOpen: true,
 } 

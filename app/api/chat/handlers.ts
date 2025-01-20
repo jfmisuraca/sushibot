@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
-import { preloadedBoxes, storeInfo } from "./lib/data"
-import { OrderRequest } from "./lib/types"
+import { preloadedBoxes, storeInfo } from "./data"
+import type { OrderRequest } from "./types"
 
 export function handleQueryBoxes() {
   const boxList = preloadedBoxes
