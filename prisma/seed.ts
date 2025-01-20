@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import { preloadedBoxes, storeInfo } from '../app/api/chat/data'
+import { ObjectId } from 'bson'
 
 const prisma = new PrismaClient()
 
@@ -16,10 +17,13 @@ async function main() {
     })
   }
 
+  // Generar un ObjectId válido para la tienda
+  const storeId = new ObjectId().toString()
+
   // Cargar información de la tienda
   console.log('🏪 Cargando información de la tienda...')
   await prisma.store.upsert({
-    where: { id: '1' },
+    where: { id: storeId },
     update: {
       address: storeInfo.address,
       phone: storeInfo.phone,
@@ -27,7 +31,7 @@ async function main() {
       isOpen: storeInfo.isOpen,
     },
     create: {
-      id: '1',
+      id: storeId,
       address: storeInfo.address,
       phone: storeInfo.phone,
       hours: storeInfo.hours,
