@@ -29,3 +29,11 @@ model Store {
   hours   Json
   isOpen  Boolean
 }
+
+model Order {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  items     Json     // Array de {boxName: string, quantity: number}
+  total     Float
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+}

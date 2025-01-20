@@ -61,3 +61,26 @@ Para ejecutar los tests:
 ```bash
 npm run test
 ```
+
+## 🤖 Ejemplos de mensajes
+
+El bot entiende:
+- "Mostrame el menú" / "¿Qué boxes tienen?"
+- "¿Están abiertos?" / "¿Cuál es el horario?"
+- "Quiero pedir una box chica y una mediana"
+- "¿Dónde están ubicados?"
+- "¿Cuál es el teléfono?"
+
+## 🛣️ Endpoints
+
+POST /api/chat
+- Body: { message: string }
+- Response: { response: string }
+
+## 🚨 Manejo de Errores
+
+- Validación de pedidos
+- Boxes no existentes
+- Cantidades inválidas
+- Errores de conexión a DB
+- Errores de OpenAI API

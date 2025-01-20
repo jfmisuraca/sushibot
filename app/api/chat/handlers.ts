@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server"
 import { preloadedBoxes, storeInfo } from "./data"
 import type { OrderRequest } from "./types"
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 const createResponse = (response: string, status = 200) => {
   return NextResponse.json({ response }, { status })
@@ -45,7 +48,7 @@ export const handleGetLocation = () =>
 export const handleGetPhone = () => 
   createResponse(`📞 Nuestro teléfono:\n${storeInfo.phone}`)
 
-export function handleCreateOrder(orderRequest: OrderRequest) {
+export async function handleCreateOrder(orderRequest: OrderRequest) {
   try {
     if (!orderRequest.items?.length) {
       return createResponse("No se especificaron items para el pedido.", 400)
@@ -69,11 +72,26 @@ export function handleCreateOrder(orderRequest: OrderRequest) {
       }
     }
 
+    const total = orderRequest.items.reduce((sum, item) => {
+      const box = preloadedBoxes.find(b => b.name === item.boxName)
+      return sum + (box?.price || 0) * item.quantity
+    }, 0)
+
+    const order = await prisma.order.create({
+      data: {
+        items: orderRequest.items,
+        total,
+        status: 'pending'
+      }
+    })
+
     const orderDetails = orderRequest.items
       .map(item => `${item.quantity}x ${item.boxName}`)
       .join(", ")
 
-    return createResponse(`¡Gracias! Tu pedido de ${orderDetails} ha sido registrado y será preparado pronto.`)
+    return createResponse(
+      `¡Gracias! Tu pedido #${order.id} de ${orderDetails} (Total: $${total.toFixed(2)}) ha sido registrado.`
+    )
   } catch (error) {
     console.error('Error en handleCreateOrder:', error)
     return createResponse("Error al procesar el pedido", 500)
