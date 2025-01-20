@@ -84,3 +84,20 @@ POST /api/chat
 - Cantidades inválidas
 - Errores de conexión a DB
 - Errores de OpenAI API
+
+## 💾 Base de Datos
+
+### Datos de ejemplo
+El proyecto incluye datos preconfigurados para:
+- Boxes de sushi con precios y descripciones
+- Información del local (horarios, ubicación)
+- Respuestas predefinidas para preguntas frecuentes
+
+### Carga inicial de datos
+Para cargar los datos iniciales:
+
+```bash
+npm run seed
+```
+
+Los datos se cargarán automáticamente en MongoDB usando Prisma.
