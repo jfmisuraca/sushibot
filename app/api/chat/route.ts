@@ -1,74 +1,44 @@
-type Box = {
-  id: string
-  description: string
-  name: string
-  createdAt: Date
-  price: number
-  products: Array<{
-    id: string
-    name: string
-    description: string
-    price: number
-    quantity: number
-    vegan: boolean
-  }>
-}
-
 import { NextResponse } from "next/server"
 import openai from "@/lib/openai"
 import { PrismaClient } from "@prisma/client"
 
 const prisma = new PrismaClient()
 
-const STORE_INFO = {
-  address: "123 Sushi Street, Sushi City, SC 12345",
-  phone: "+1234567890",
-  openingHours: "Monday to Sunday: 11:00 AM - 10:00 PM",
+const INFORMACION_TIENDA = {
+  direccion: "123 Sushi Street, Sushi City, SC 12345",
+  telefono: "+1234567890",
+  horario: "Lunes a Domingo: 11:00 AM - 10:00 PM",
 }
 
 export async function POST(req: Request) {
   try {
     const { message } = await req.json()
 
-    // Check for store info questions
-    if (message.toLowerCase().includes("address") || message.toLowerCase().includes("location")) {
+    // Revisar preguntas sobre la tienda
+    if (message.toLowerCase().includes("dirección") || message.toLowerCase().includes("ubicación")) {
       return NextResponse.json({
-        response: `Our store is located at: ${STORE_INFO.address}
-        
-        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.215707164939!2d-73.98823492426385!3d40.75838383560561!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c25855c6480299%3A0x55194ec5a1ae072e!2sTimes%20Square!5e0!3m2!1sen!2sus!4v1689242051525!5m2!1sen!2sus" width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`,
+        response: `Nuestra tienda está ubicada en: ${INFORMACION_TIENDA.direccion}
+
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.215707164939!2d-73.98823495118787!3d40.74881737922642!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0:0x0!2zMzTCsDQ0JzU1LjciTiA3M8KwNTknMTcuNiJX!5e0!3m2!1ses!2s!4v1633059402833!5m2!1ses!2s" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>`,
       })
     }
 
-    if (
-      message.toLowerCase().includes("phone") ||
-      message.toLowerCase().includes("telephone") ||
-      message.toLowerCase().includes("contact")
-    ) {
-      return NextResponse.json({
-        response: `You can contact us via WhatsApp: <a href="https://wa.me/${STORE_INFO.phone}" target="_blank">${STORE_INFO.phone}</a>`,
-      })
+    if (message.toLowerCase().includes("teléfono")) {
+      return NextResponse.json({ response: `Puedes contactarnos al teléfono: ${INFORMACION_TIENDA.telefono}` })
     }
 
-    if (
-      message.toLowerCase().includes("open") ||
-      message.toLowerCase().includes("close") ||
-      message.toLowerCase().includes("hours")
-    ) {
-      const now = new Date()
-      const currentHour = now.getHours()
-      const isOpen = currentHour >= 11 && currentHour < 22
-      return NextResponse.json({
-        response: `We are currently ${isOpen ? "OPEN" : "CLOSED"}. Our opening hours are: ${STORE_INFO.openingHours}`,
-      })
+    if (message.toLowerCase().includes("horario")) {
+      return NextResponse.json({ response: `Nuestro horario es: ${INFORMACION_TIENDA.horario}` })
     }
 
+    // OpenAI integration
     const chatCompletion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
           content:
-            "You are a helpful assistant for a sushi restaurant. You can help with querying pre-made sushi boxes, checking availability, placing orders, and changing or canceling orders.",
+            "Eres un asistente útil para un restaurante de sushi. Puedes ayudar con consultas sobre productos, verificar disponibilidad, realizar pedidos y cambiar o cancelar pedidos.",
         },
         { role: "user", content: message },
       ],
@@ -77,7 +47,7 @@ export async function POST(req: Request) {
           type: "function",
           function: {
             name: "query_boxes",
-            description: "Query available pre-made sushi boxes",
+            description: "Consultar cajas de sushi pre-armadas disponibles",
             parameters: {
               type: "object",
               properties: {},
@@ -88,7 +58,7 @@ export async function POST(req: Request) {
           type: "function",
           function: {
             name: "check_availability",
-            description: "Check availability of a specific sushi box",
+            description: "Verificar disponibilidad de una caja de sushi específica",
             parameters: {
               type: "object",
               properties: {
@@ -102,7 +72,7 @@ export async function POST(req: Request) {
           type: "function",
           function: {
             name: "place_order",
-            description: "Place an order for a sushi box",
+            description: "Realizar un pedido de una caja de sushi",
             parameters: {
               type: "object",
               properties: {
@@ -117,7 +87,7 @@ export async function POST(req: Request) {
           type: "function",
           function: {
             name: "change_order",
-            description: "Change an existing order",
+            description: "Cambiar un pedido existente",
             parameters: {
               type: "object",
               properties: {
@@ -132,7 +102,7 @@ export async function POST(req: Request) {
           type: "function",
           function: {
             name: "cancel_order",
-            description: "Cancel an existing order",
+            description: "Cancelar un pedido existente",
             parameters: {
               type: "object",
               properties: {
@@ -152,34 +122,28 @@ export async function POST(req: Request) {
       const functionName = functionCall.function.name
       const functionArgs = JSON.parse(functionCall.function.arguments || "{}")
 
-      let functionResponse
       switch (functionName) {
         case "query_boxes":
-          functionResponse = await handleQueryBoxes()
-          break
+          return NextResponse.json({ response: await handleQueryBoxes() })
         case "check_availability":
-          functionResponse = await handleCheckAvailability(functionArgs.box_name)
-          break
+          return NextResponse.json({ response: await handleCheckAvailability(functionArgs.box_name) })
         case "place_order":
-          functionResponse = await handlePlaceOrder(functionArgs.box_name, functionArgs.quantity)
-          break
+          return NextResponse.json({ response: await handlePlaceOrder(functionArgs.box_name, functionArgs.quantity) })
         case "change_order":
-          functionResponse = await handleChangeOrder(functionArgs.order_id, functionArgs.new_quantity)
-          break
+          return NextResponse.json({
+            response: await handleChangeOrder(functionArgs.order_id, functionArgs.new_quantity),
+          })
         case "cancel_order":
-          functionResponse = await handleCancelOrder(functionArgs.order_id)
-          break
+          return NextResponse.json({ response: await handleCancelOrder(functionArgs.order_id) })
         default:
-          functionResponse = "I'm sorry, I couldn't process that request."
+          return NextResponse.json({ response: "Lo siento, no pude procesar esa solicitud." })
       }
-
-      return NextResponse.json({ response: functionResponse })
     } else {
       return NextResponse.json({ response: assistantMessage.content })
     }
   } catch (error) {
-    console.error("Error processing request:", error)
-    return NextResponse.json({ error: "An error occurred while processing your request." }, { status: 500 })
+    console.error(error)
+    return NextResponse.json({ error: "Ocurrió un error al procesar la solicitud." }, { status: 500 })
   }
 }
 
@@ -189,28 +153,28 @@ async function handleQueryBoxes() {
 }
 
 async function handleCheckAvailability(boxName: string) {
-  const box = (await prisma.box.findFirst({
+  const box = await prisma.box.findFirst({
     where: { name: { contains: boxName, mode: "insensitive" } },
     include: { products: true },
-  })) as Box | null
+  })
 
   if (box) {
     const availableProducts = box.products.filter((product) => product.quantity > 0)
     if (availableProducts.length === box.products.length) {
-      return `The ${box.name} is available.`
+      return `La caja ${box.name} está disponible.`
     } else {
-      return `Sorry, the ${box.name} is currently not available due to some products being out of stock.`
+      return `Lo siento, la caja ${box.name} no está disponible en este momento debido a que algunos productos están agotados.`
     }
   } else {
-    return `Sorry, we couldn't find a box named "${boxName}".`
+    return `Lo siento, no pudimos encontrar una caja llamada "${boxName}".`
   }
 }
 
 async function handlePlaceOrder(boxName: string, quantity: number) {
-  const box = (await prisma.box.findFirst({
+  const box = await prisma.box.findFirst({
     where: { name: { contains: boxName, mode: "insensitive" } },
     include: { products: true },
-  })) as Box | null
+  })
 
   if (box) {
     const availableProducts = box.products.filter((product) => product.quantity >= quantity)
@@ -229,26 +193,37 @@ async function handlePlaceOrder(boxName: string, quantity: number) {
           }),
         ),
       )
-      return `Your order for ${quantity} ${box.name}(s) has been placed successfully. Your order ID is ${order.id}.`
+      return `Tu pedido de ${quantity} ${box.name}(s) ha sido realizado con éxito. Tu número de pedido es ${order.id}.`
     } else {
-      return `Sorry, we don't have enough stock to fulfill your order for ${quantity} ${box.name}(s).`
+      return `Lo siento, no tenemos suficiente stock para cumplir tu pedido de ${quantity} ${box.name}(s).`
     }
   } else {
-    return `Sorry, we couldn't find a box named "${boxName}".`
+    return `Lo siento, no pudimos encontrar una caja llamada "${boxName}".`
   }
 }
 
 async function handleChangeOrder(orderId: string, newQuantity: number) {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    include: { product: { include: { box: true } } },
+    include: {
+      product: {
+        include: {
+          box: {
+            include: {
+              products: true,
+            },
+          },
+        },
+      },
+    },
   })
 
   if (!order) {
-    return `Sorry, we couldn't find an order with ID ${orderId}.`
+    return "No se encontró el pedido."
   }
 
   const box = order.product.box
+
   const availableProducts = await prisma.product.findMany({
     where: { boxId: box.id, quantity: { gte: newQuantity - order.quantity } },
   })
@@ -258,6 +233,7 @@ async function handleChangeOrder(orderId: string, newQuantity: number) {
       where: { id: orderId },
       data: { quantity: newQuantity },
     })
+
     await Promise.all(
       box.products.map((product) =>
         prisma.product.update({
@@ -266,30 +242,42 @@ async function handleChangeOrder(orderId: string, newQuantity: number) {
         }),
       ),
     )
-    return `Your order has been updated to ${newQuantity} ${box.name}(s).`
+
+    return `Tu pedido ha sido actualizado a ${newQuantity} ${box.name}(s).`
   } else {
-    return `Sorry, we don't have enough stock to change your order to ${newQuantity} ${box.name}(s).`
+    return `Lo siento, no hay suficientes productos disponibles para cambiar tu pedido a ${newQuantity} ${box.name}(s).`
   }
 }
 
 async function handleCancelOrder(orderId: string) {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    include: { product: { include: { box: true } } },
+    include: {
+      product: {
+        include: {
+          box: {
+            include: {
+              products: true,
+            },
+          },
+        },
+      },
+    },
   })
 
   if (!order) {
-    return `Sorry, we couldn't find an order with ID ${orderId}.`
+    return "No se encontró el pedido."
   }
 
   if (order.status === "cancelled") {
-    return `The order with ID ${orderId} has already been cancelled.`
+    return `El pedido con ID ${orderId} ya ha sido cancelado.`
   }
 
   await prisma.order.update({
     where: { id: orderId },
     data: { status: "cancelled" },
   })
+
   await Promise.all(
     order.product.box.products.map((product) =>
       prisma.product.update({
@@ -298,7 +286,8 @@ async function handleCancelOrder(orderId: string) {
       }),
     ),
   )
-  return `Your order for ${order.quantity} ${order.product.box.name}(s) has been cancelled.`
+
+  return `Tu pedido de ${order.quantity} ${order.product.box.name}(s) ha sido cancelado.`
 }
 
 

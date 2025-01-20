@@ -121,7 +121,7 @@ export default function ChatInterface() {
                 placeholder="Escribe tu mensaje aquí..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
+                onKeyUp={handleKeyPress}
                 rows={1}
               />
               <button type="submit" className="send-button" disabled={isLoading}>
