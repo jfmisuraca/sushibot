@@ -15,7 +15,7 @@ Un chatbot inteligente construido con Next.js, MongoDB y OpenAI para gestionar p
 
 1. Clona el repositorio:
 ```bash
-git clone https://github.com/tu-usuario/sushibot.git
+git clone https://github.com/jfmisuraca/sushibot.git
 cd sushibot
 ```
 
