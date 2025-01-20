@@ -42,3 +42,9 @@ model Box {
   createdAt DateTime  @default(now())
   price     Float
 }
+
+model Store {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  hours  Json[]
+  isOpen Boolean @default(true)
+}

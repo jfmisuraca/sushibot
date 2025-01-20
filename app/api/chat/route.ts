@@ -4,6 +4,12 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+interface StoreHours {
+  day: string;
+  open: string;
+  close: string;
+}
+
 export async function POST(req: Request) {
   const { message } = await req.json();
 
@@ -13,7 +19,7 @@ export async function POST(req: Request) {
       messages: [
         { 
           role: "system", 
-          content: "Sos un asistente de ayuda para un restaurante de sushi. Podés consultar productos (mostrándolos en forma de lista, no uno detrás del otro), verificar su disponibilidad, realizar pedidos, cambiar o cancelar pedidos. Tus clientes son argentinos, tenés que hablarles con voseo. Sólo podés usar información de la base de datos." 
+          content: "Sos un asistente de ayuda para un restaurante de sushi. Podés consultar productos (mostrándolos en forma de lista, no uno detrás del otro), verificar su disponibilidad, realizar pedidos, cambiar o cancelar pedidos, y brindar información sobre los horarios del local. Tus clientes son argentinos, tenés que hablarles con voseo. Sólo podés usar información de la base de datos." 
         },
         { role: "user", content: message }
       ],
@@ -32,79 +38,14 @@ export async function POST(req: Request) {
         {
           type: "function",
           function: {
-            name: "check_availability",
-            description: "Check availability of a specific product",
-            
-            parameters: {
-              type: "object",
-              properties: {
-                product_name: { type: "string" },
-              },
-              required: ["product_name"],
-            },
-          }
-        },
-        {
-          type: "function",
-          function: {
-            name: "place_order",
-            description: "Place an order for a product",
-            parameters: {
-              type: "object",
-              properties: {
-                product_name: { type: "string" },
-                quantity: { type: "integer" },
-              },
-              required: ["product_name", "quantity"],
-            },
-          }
-        },
-        {
-          type: "function",
-          function: {
-            name: "change_order",
-            description: "Change an existing order",
-            parameters: {
-              type: "object",
-              properties: {
-                order_id: { type: "string" },
-                new_quantity: { type: "integer" },
-              },
-              required: ["order_id", "new_quantity"],
-            },
-          }
-        },
-        {
-          type: "function",
-          function: {
-            name: "cancel_order",
-            description: "Cancel an existing order",
-            parameters: {
-              type: "object",
-              properties: {
-                order_id: { type: "string" },
-              },
-              required: ["order_id"],
-            },
-          }
-        },
-        {
-          type: "function",
-          function: {
             name: "get_info",
-            description: "Get information about the store",
+            description: "Get information about store hours and current open/closed status",
             parameters: {
               type: "object",
-              properties: {
-                name: { type: "string" },
-                address: { type: "string" },
-                phone: { type: "string" },
-                email: { type: "string" },
-                opening: { type: "string" },
-              },
+              properties: {},
             },
           }
-        },
+        }
       ],
     });
 
@@ -112,25 +53,23 @@ export async function POST(req: Request) {
 
     if (assistantMessage.tool_calls) {
       const functionName = assistantMessage.tool_calls[0].function.name;
-      const functionArgs = JSON.parse(assistantMessage.tool_calls[0].function.arguments || '{}');
-
+      
       switch (functionName) {
         case 'query_products':
           return await handleQueryProducts();
-        case 'check_availability':
-          return handleCheckAvailability(functionArgs.product_name);
-        case 'place_order':
-          return handlePlaceOrder(functionArgs.product_name, functionArgs.quantity);
-        case 'change_order':
-          return handleChangeOrder(functionArgs.order_id, functionArgs.new_quantity);
-        case 'cancel_order':
-          return handleCancelOrder(functionArgs.order_id);
+        case 'get_info':
+          return await handleGetStoreInfo();
         default:
-          return NextResponse.json({ response: "Lo siento, no pude procesar esa solicitud." });
+          return NextResponse.json({ 
+            response: "Lo siento, no pude procesar esa solicitud." 
+          });
       }
-    } else {
-      return NextResponse.json({ response: assistantMessage.content });
     }
+
+    return NextResponse.json({ 
+      response: assistantMessage.content || "Lo siento, no pude procesar esa solicitud." 
+    });
+
   } catch (error) {
     console.error('Error detallado:', error);
     return NextResponse.json({ 
@@ -173,90 +112,61 @@ async function handleQueryProducts() {
   }
 }
 
-async function handleCheckAvailability(productName: string) {
-  const product = await prisma.product.findFirst({
-    where: { name: { contains: productName, mode: 'insensitive' } }
-  });
-
-  if (product) {
-    return NextResponse.json({ response: `Tenemos ${product.quantity} unidades de ${product.name} disponibles.` });
-  } else {
-    return NextResponse.json({ response: `Lo siento, no pude encontrar el producto "${productName}".` });
-  }
-}
-
-async function handlePlaceOrder(productName: string, quantity: number) {
-  const product = await prisma.product.findFirst({
-    where: { name: { contains: productName, mode: 'insensitive' } }
-  });
-
-  if (product) {
-    if (quantity > product.quantity) {
-      return NextResponse.json({ response: `Lo siento, solo tenemos ${product.quantity} unidades de ${product.name} disponibles.` });
-    }
-
-    const order = await prisma.order.create({
-      data: {
-        productId: product.id,
-        quantity
+async function handleGetStoreInfo() {
+  try {
+    const storeInfo = await prisma.Store.findFirst({
+      select: {
+        hours: true,
+        isOpen: true
       }
     });
-    await prisma.product.update({
-      where: { id: product.id },
-      data: { quantity: product.quantity - quantity }
+
+    if (!storeInfo) {
+      return NextResponse.json({
+        response: "Lo siento, no se pudo obtener información del local."
+      });
+    }
+
+    const now = new Date();
+    const currentDay = now.toLocaleDateString('es-AR', { weekday: 'long' }).toLowerCase();
+    const currentTime = now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+    const todayHours = storeInfo.hours.find((h: StoreHours) => {
+      const days = h.day.toLowerCase();
+      return days.includes(currentDay) || 
+             (days.includes('lunes a viernes') && ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'].includes(currentDay)) ||
+             (days.includes('sábados y domingos') && ['sábado', 'domingo'].includes(currentDay));
     });
-    return NextResponse.json({ response: `Tu pedido de ${quantity} ${product.name} fue realizado con éxito con el número de orden ${order.id}. ¡Muchas gracias!` });
-  } else {
-    return NextResponse.json({ response: `Lo siento, no pude encontrar el producto "${productName}".` });
+
+    if (!todayHours) {
+      return NextResponse.json({
+        response: "Lo siento, no tengo información sobre los horarios de hoy."
+      });
+    }
+
+    const isCurrentlyOpen = currentTime >= todayHours.open && currentTime <= todayHours.close;
+
+    if (isCurrentlyOpen) {
+      return NextResponse.json({
+        response: `¡Sí! Estamos abiertos ahora. Cerramos a las ${todayHours.close}hs.`
+      });
+    } else {
+      if (currentTime < todayHours.open) {
+        return NextResponse.json({
+          response: `En este momento estamos cerrados. Abrimos hoy a las ${todayHours.open}hs.`
+        });
+      } else {
+        const nextDay = storeInfo.hours[0];
+        return NextResponse.json({
+          response: `En este momento estamos cerrados. Abrimos mañana a las ${nextDay.open}hs.`
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error al obtener información del local:', error);
+    return NextResponse.json({ 
+      response: "Lo siento, hubo un error al obtener información del local.",
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    }, { status: 500 });
   }
-}
-
-async function handleChangeOrder(orderId: string, newQuantity: number) {
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    include: { product: true }
-  });
-
-  if (!order) {
-    return NextResponse.json({ response: `Lo siento, no pude encontrar un pedido con el ID ${orderId}.` });
-  }
-
-  if (newQuantity > order.product.quantity + order.quantity) {
-    return NextResponse.json({ response: `Lo siento, no tenemos suficiente stock. La cantidad máxima disponible es ${order.product.quantity + order.quantity}.` });
-  }
-
-  await prisma.order.update({
-    where: { id: orderId },
-    data: { quantity: newQuantity }
-  });
-  await prisma.product.update({
-    where: { id: order.productId },
-    data: { quantity: order.product.quantity + order.quantity - newQuantity }
-  });
-  return NextResponse.json({ response: `Tu pedido ha sido actualizado a ${newQuantity} ${order.product.name}.` });
-}
-
-async function handleCancelOrder(orderId: string) {
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    include: { product: true }
-  });
-
-  if (!order) {
-    return NextResponse.json({ response: `Lo siento, no pude encontrar un pedido con el ID ${orderId}.` });
-  }
-
-  if (order.status === 'cancelled') {
-    return NextResponse.json({ response: `El pedido con el ID ${orderId} ya fue cancelado.` });
-  }
-
-  await prisma.order.update({
-    where: { id: orderId },
-    data: { status: 'cancelled' }
-  });
-  await prisma.product.update({
-    where: { id: order.productId },
-    data: { quantity: { increment: order.quantity } }
-  });
-  return NextResponse.json({ response: `Tu pedido de ${order.quantity} ${order.product.name} fue cancelado.` });
 }

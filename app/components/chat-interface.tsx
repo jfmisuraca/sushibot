@@ -26,11 +26,19 @@ export default function ChatInterface() {
     scrollToBottom();
   }, [messages])
 
-  const hideKeyboard = () => {
-    if (textareaRef.current) {
-      textareaRef.current.blur();
-    }
-  }; const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  // Mantener el foco siempre
+  useEffect(() => {
+    const keepFocus = () => textareaRef.current?.focus();
+    keepFocus();
+    window.addEventListener('blur', keepFocus);
+    window.addEventListener('focus', keepFocus);
+    return () => {
+      window.removeEventListener('blur', keepFocus);
+      window.removeEventListener('focus', keepFocus);
+    };
+  }, []);
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSubmit(e)
@@ -44,7 +52,6 @@ export default function ChatInterface() {
     const userMessage = input.trim()
     setInput('')
     setIsLoading(true)
-    hideKeyboard()
 
     setMessages(prev => [...prev, { role: 'user', content: userMessage }])
 
