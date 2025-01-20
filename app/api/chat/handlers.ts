@@ -64,7 +64,17 @@ export function handleGetPhone() {
 }
 
 export function handleCreateOrder(orderRequest: OrderRequest) {
-  // Referencia al código original de handleCreateOrder
-  // startLine: 315
-  // endLine: 401
+  if (orderRequest.confirm) {
+    return NextResponse.json({
+      response: "¡Gracias! Tu pedido ha sido confirmado y será preparado pronto."
+    })
+  }
+
+  const orderDetails = orderRequest.items
+    ?.map(item => `${item.quantity}x ${item.boxName}`)
+    .join(", ")
+
+  return NextResponse.json({
+    response: `Por favor confirma tu pedido de: ${orderDetails}. ¿Estás de acuerdo?`
+  })
 } 
