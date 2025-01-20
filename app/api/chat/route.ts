@@ -9,92 +9,114 @@ export async function POST(req: Request) {
 
   try {
     const chatCompletion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4",
       messages: [
-        { role: "system", content: "Sos un asistente de ayuda para un restaurante de sushi. Podés consultar productos (mostrándolos en forma de lista, no uno detrás del otro), verificar su disponibilidad, realizar pedidos, cambiar o cancelar pedidos. Tus clientes son argentinos, tenés que hablarles con voseo. Sólo podés usar información de la base de datos." },
+        { 
+          role: "system", 
+          content: "Sos un asistente de ayuda para un restaurante de sushi. Podés consultar productos (mostrándolos en forma de lista, no uno detrás del otro), verificar su disponibilidad, realizar pedidos, cambiar o cancelar pedidos. Tus clientes son argentinos, tenés que hablarles con voseo. Sólo podés usar información de la base de datos." 
+        },
         { role: "user", content: message }
       ],
-      functions: [
+      tools: [
         {
-          name: "query_products",
-          description: "Query available products",
-          parameters: {
-            type: "object",
-            properties: {},
-          },
+          type: "function",
+          function: {
+            name: "query_products",
+            description: "Query available products",
+            parameters: {
+              type: "object",
+              properties: {},
+            },
+          }
         },
         {
-          name: "check_availability",
-          description: "Check availability of a specific product",
-          parameters: {
-            type: "object",
-            properties: {
-              product_name: { type: "string" },
+          type: "function",
+          function: {
+            name: "check_availability",
+            description: "Check availability of a specific product",
+            
+            parameters: {
+              type: "object",
+              properties: {
+                product_name: { type: "string" },
+              },
+              required: ["product_name"],
             },
-            required: ["product_name"],
-          },
+          }
         },
         {
-          name: "place_order",
-          description: "Place an order for a product",
-          parameters: {
-            type: "object",
-            properties: {
-              product_name: { type: "string" },
-              quantity: { type: "integer" },
+          type: "function",
+          function: {
+            name: "place_order",
+            description: "Place an order for a product",
+            parameters: {
+              type: "object",
+              properties: {
+                product_name: { type: "string" },
+                quantity: { type: "integer" },
+              },
+              required: ["product_name", "quantity"],
             },
-            required: ["product_name", "quantity"],
-          },
+          }
         },
         {
-          name: "change_order",
-          description: "Change an existing order",
-          parameters: {
-            type: "object",
-            properties: {
-              order_id: { type: "string" },
-              new_quantity: { type: "integer" },
+          type: "function",
+          function: {
+            name: "change_order",
+            description: "Change an existing order",
+            parameters: {
+              type: "object",
+              properties: {
+                order_id: { type: "string" },
+                new_quantity: { type: "integer" },
+              },
+              required: ["order_id", "new_quantity"],
             },
-            required: ["order_id", "new_quantity"],
-          },
+          }
         },
         {
-          name: "cancel_order",
-          description: "Cancel an existing order",
-          parameters: {
-            type: "object",
-            properties: {
-              order_id: { type: "string" },
+          type: "function",
+          function: {
+            name: "cancel_order",
+            description: "Cancel an existing order",
+            parameters: {
+              type: "object",
+              properties: {
+                order_id: { type: "string" },
+              },
+              required: ["order_id"],
             },
-            required: ["order_id"],
-          },
+          }
         },
         {
-          name: "get_info",
-          description: "Get information about the store",
-          parameters: {
-            type: "object",
-            properties: {
-              name: { type: "string" },
-              address: { type: "string" },
-              phone: { type: "string" },
-              email: { type: "string" },
-              opening: { type: "string" },
+          type: "function",
+          function: {
+            name: "get_info",
+            description: "Get information about the store",
+            parameters: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+                address: { type: "string" },
+                phone: { type: "string" },
+                email: { type: "string" },
+                opening: { type: "string" },
+              },
             },
-          },
+          }
         },
       ],
     });
 
     const assistantMessage = chatCompletion.choices[0].message;
 
-    if (assistantMessage.function_call) {
-      const functionName = assistantMessage.function_call.name;
-      const functionArgs = JSON.parse(assistantMessage.function_call.arguments || '{}');
+    if (assistantMessage.tool_calls) {
+      const functionName = assistantMessage.tool_calls[0].function.name;
+      const functionArgs = JSON.parse(assistantMessage.tool_calls[0].function.arguments || '{}');
 
       switch (functionName) {
         case 'query_products':
-          return handleQueryProducts();
+          return await handleQueryProducts();
         case 'check_availability':
           return handleCheckAvailability(functionArgs.product_name);
         case 'place_order':
@@ -104,23 +126,51 @@ export async function POST(req: Request) {
         case 'cancel_order':
           return handleCancelOrder(functionArgs.order_id);
         default:
-          return NextResponse.json({ response: "I'm sorry, I couldn't process that request." });
+          return NextResponse.json({ response: "Lo siento, no pude procesar esa solicitud." });
       }
     } else {
       return NextResponse.json({ response: assistantMessage.content });
     }
   } catch (error) {
-    console.error('Error processing request:', error);
-    return NextResponse.json({ response: "Lo sentimos, hubo un error al procesar tu solicitud." }, { status: 500 });
+    console.error('Error detallado:', error);
+    return NextResponse.json({ 
+      response: "Lo siento, hubo un error al procesar tu solicitud.",
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    }, { status: 500 });
   }
 }
 
 async function handleQueryProducts() {
-  const products = await prisma.product.findMany();
-  const productList = products
-    .map(p => `- ${p.name}: $${p.price.toFixed(2)} - ${p.description} (${p.vegan ? 'Vegano' : 'No vegano'})`)
-    .join('\n');
-  return NextResponse.json({ response: `Aquí están nuestros productos disponibles:\n${productList}` });
+  try {
+    const products = await prisma.product.findMany({
+      select: {
+        name: true,
+        price: true,
+        quantity: true,
+        description: true
+      }
+    });
+    
+    if (!products || products.length === 0) {
+      return NextResponse.json({
+        response: "Lo siento, no hay productos disponibles en este momento."
+      });
+    }
+
+    const productList = products.map(p => 
+      `- ${p.name}: $${p.price} (${p.quantity} disponibles)`
+    ).join('\n');
+
+    return NextResponse.json({
+      response: `Estos son nuestros productos disponibles:\n${productList}`
+    });
+  } catch (error) {
+    console.error('Error al consultar productos:', error);
+    return NextResponse.json({ 
+      response: "Lo siento, hubo un error al consultar los productos.",
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    }, { status: 500 });
+  }
 }
 
 async function handleCheckAvailability(productName: string) {
@@ -210,4 +260,3 @@ async function handleCancelOrder(orderId: string) {
   });
   return NextResponse.json({ response: `Tu pedido de ${order.quantity} ${order.product.name} fue cancelado.` });
 }
-

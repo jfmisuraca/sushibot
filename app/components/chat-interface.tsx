@@ -47,7 +47,6 @@ export default function ChatInterface() {
     hideKeyboard()
 
     setMessages(prev => [...prev, { role: 'user', content: userMessage }])
-    setInput('')
 
     try {
       const response = await fetch('/api/chat', {
@@ -58,18 +57,25 @@ export default function ChatInterface() {
         body: JSON.stringify({ message: userMessage }),
       })
 
+      const data = await response.json()
+      console.log('Respuesta del servidor:', data)
+
       if (!response.ok) {
-        throw new Error('Failed to send message')
+        throw new Error(data.error || `Error del servidor: ${response.status} ${response.statusText}`)
       }
 
-      const data = await response.json()
+      if (!data.response) {
+        throw new Error('Respuesta del servidor no válida')
+      }
 
       setMessages(prev => [...prev, { role: 'assistant', content: data.response }])
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Error detallado:', error)
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: 'Lo siento, hubo un error al procesar tu mensaje.'
+        content: error instanceof Error 
+          ? `Error: ${error.message}` 
+          : 'Lo siento, ocurrió un error al procesar tu mensaje. Por favor, intenta nuevamente.'
       }])
     } finally {
       setIsLoading(false)
