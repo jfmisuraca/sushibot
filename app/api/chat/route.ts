@@ -27,21 +27,21 @@ export async function POST(req: Request) {
         {
           type: "function",
           function: {
-            name: "query_products",
-            description: "Query available products",
-            parameters: {
-              type: "object",
-              properties: {},
-            },
+          name: "query_products",
+          description: "Query available products",
+          parameters: {
+            type: "object",
+            properties: {},
+          },
           }
         },
         {
           type: "function",
           function: {
-            name: "get_info",
+          name: "get_info",
             description: "Get information about store hours and current open/closed status",
-            parameters: {
-              type: "object",
+          parameters: {
+            type: "object",
               properties: {},
             },
           }
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 
     if (assistantMessage.tool_calls) {
       const functionName = assistantMessage.tool_calls[0].function.name;
-      
+
       switch (functionName) {
         case 'query_products':
           return await handleQueryProducts();
