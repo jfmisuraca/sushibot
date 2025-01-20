@@ -82,6 +82,11 @@ export async function handleCreateOrder(orderRequest: OrderRequest) {
         items: orderRequest.items as any,
         total,
         status: 'pending'
+      },
+      select: {
+        orderNumber: true,
+        items: true,
+        total: true
       }
     })
 
@@ -90,7 +95,7 @@ export async function handleCreateOrder(orderRequest: OrderRequest) {
       .join(", ")
 
     return createResponse(
-      `¡Gracias! Tu pedido #${order.id} de ${orderDetails} (Total: $${total.toFixed(2)}) ha sido registrado.`
+      `¡Gracias! Tu pedido #${order.orderNumber} de ${orderDetails} (Total: $${total.toFixed(2)}) ha sido registrado.`
     )
   } catch (error) {
     console.error('Error en handleCreateOrder:', error)
