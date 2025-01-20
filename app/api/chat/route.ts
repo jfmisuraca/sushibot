@@ -115,7 +115,7 @@ export async function POST(req: Request) {
           type: "function",
           function: {
             name: "query_boxes",
-            description: "Query available sushi boxes",
+            description: "Consultar los boxes de sushi disponibles",
             parameters: {
               type: "object",
               properties: {},
@@ -126,7 +126,29 @@ export async function POST(req: Request) {
           type: "function",
           function: {
             name: "get_store_info",
-            description: "Get information about store hours, address, phone, and current open/closed status",
+            description: "Consultar los horarios del local",
+            parameters: {
+              type: "object",
+              properties: {},
+            },
+          },
+        },
+        {
+          type: "function",
+          function: {
+            name: "get_location",
+            description: "Consultar solo la dirección del local",
+            parameters: {
+              type: "object",
+              properties: {},
+            },
+          },
+        },
+        {
+          type: "function",
+          function: {
+            name: "get_phone",
+            description: "Consultar solo el teléfono del local",
             parameters: {
               type: "object",
               properties: {},
@@ -146,6 +168,10 @@ export async function POST(req: Request) {
           return handleQueryBoxes()
         case "get_store_info":
           return handleGetStoreInfo()
+        case "get_location":
+          return handleGetLocation()
+        case "get_phone":
+          return handleGetPhone()
         default:
           return NextResponse.json({
             response: "Lo siento, no pude procesar esa solicitud.",
@@ -168,7 +194,7 @@ export async function POST(req: Request) {
   }
 }
 
-function handleQueryBoxes() {
+export function handleQueryBoxes() {
   const boxList = preloadedBoxes
     .map(
       (box) =>
@@ -183,18 +209,49 @@ function handleQueryBoxes() {
   })
 }
 
-function handleGetStoreInfo() {
-  const { address, phone, hours, isOpen } = storeInfo
-  const hoursInfo = hours.map((h) => `${h.day}: ${h.open} - ${h.close}`).join("\n")
-  const openStatus = isOpen ? "Abierto" : "Cerrado"
+export function handleGetStoreInfo() {
+  const { hours } = storeInfo
+  const now = new Date()
+  const currentDay = now.getDay()
+  const currentTime = now.getHours() * 60 + now.getMinutes()
+
+  const todayHours = hours.find(h => {
+    if (currentDay >= 1 && currentDay <= 5) return h.day === "Lunes a Viernes"
+    return h.day === "Sábados y Domingos"
+  })
+
+  if (!todayHours) {
+    return NextResponse.json({
+      response: "Lo siento, no hay información de horarios disponible para hoy."
+    });
+  }
+
+  const [openHour, openMinute] = todayHours.open.split(":").map(Number)
+  const [closeHour, closeMinute] = todayHours.close.split(":").map(Number)
+  const openTime = openHour * 60 + openMinute
+  const closeTime = closeHour * 60 + closeMinute
+
+  const isOpen = currentTime >= openTime && currentTime < closeTime
+  const hoursInfo = hours.map((h) => `${h.day}: ${h.open} a ${h.close}hs`).join("\n")
 
   return NextResponse.json({
-    response: `Información de la tienda:
-Dirección: ${address}
-Teléfono: ${phone}
-Horarios:
-${hoursInfo}
-Estado actual: ${openStatus}`,
+    response: `🕒 Nuestros horarios:\n\n${hoursInfo}\n\n${isOpen ? "✅ Estamos abiertos ahora" : "❌ Estamos cerrados ahora"}`
+  })
+}
+
+export function handleGetLocation() {
+  const { address } = storeInfo
+
+  return NextResponse.json({
+    response: `📍 Nos encontramos en:\n${address}`
+  })
+}
+
+export function handleGetPhone() {
+  const { phone } = storeInfo
+
+  return NextResponse.json({
+    response: `📞 Nuestro teléfono:\n${phone}`
   })
 }
 
