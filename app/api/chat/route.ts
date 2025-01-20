@@ -92,6 +92,18 @@ const storeInfo: StoreInfo = {
   isOpen: true,
 }
 
+interface OrderItem {
+  boxName: string;
+  quantity: number;
+}
+
+interface OrderRequest {
+  items?: OrderItem[];
+  boxName?: string;
+  quantity?: number;
+  confirm?: boolean | string;
+}
+
 export async function GET() {
   return NextResponse.json({ status: "OK" })
 }
@@ -105,8 +117,13 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "system",
-          content:
-            "Sos un asistente de ayuda para un restaurante de sushi. Podés consultar boxes de sushi (mostrándolos en forma de lista, no uno detrás del otro), verificar su disponibilidad, realizar pedidos, cambiar o cancelar pedidos, y brindar información sobre los horarios, dirección y teléfono del local. Tus clientes son argentinos, tenés que hablarles con voseo. Sólo podés usar información de la base de datos.",
+          content: `Sos un asistente de ayuda para un restaurante de sushi. Solo podés ofrecer estos boxes específicos:
+- Box Chica ($32.24): 4 piezas variadas
+- Box Mediana ($99.16): 8 piezas variadas
+- Box Grande ($169.89): 12 piezas variadas
+- Box Vegana (Mediana) ($103.62): 8 piezas veganas
+
+NO INVENTES otros boxes ni precios. Para pedidos, cuando el usuario confirma con 'sí', 'si' o similar, debés usar create_order con confirm=true. Tus clientes son argentinos, tenés que hablarles con voseo. Sólo podés usar información de la base de datos.`,
         },
         { role: "user", content: message },
       ],
@@ -155,6 +172,40 @@ export async function POST(req: Request) {
             },
           },
         },
+        {
+          type: "function",
+          function: {
+            name: "create_order",
+            description: "Crear un nuevo pedido de box de sushi o confirmar uno existente. Si el usuario dice 'sí' o similar a un pedido pendiente, usar confirm=true.",
+            parameters: {
+              type: "object",
+              properties: {
+                items: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      boxName: { 
+                        type: "string",
+                        description: "Nombre del box a pedir"
+                      },
+                      quantity: { 
+                        type: "number",
+                        description: "Cantidad de boxes"
+                      }
+                    },
+                    required: ["boxName", "quantity"]
+                  }
+                },
+                confirm: {
+                  type: "boolean",
+                  description: "true cuando el usuario confirma el pedido con 'sí', 'si' o similar"
+                }
+              },
+              required: ["items"]
+            }
+          }
+        }
       ],
     })
 
@@ -172,6 +223,12 @@ export async function POST(req: Request) {
           return handleGetLocation()
         case "get_phone":
           return handleGetPhone()
+        case "create_order":
+          const args = JSON.parse(assistantMessage.tool_calls[0].function.arguments);
+          return handleCreateOrder({
+            items: args.items,
+            confirm: args.confirm
+          });
         default:
           return NextResponse.json({
             response: "Lo siento, no pude procesar esa solicitud.",
@@ -253,6 +310,94 @@ export function handleGetPhone() {
   return NextResponse.json({
     response: `📞 Nuestro teléfono:\n${phone}`
   })
+}
+
+export function handleCreateOrder(orderRequest: OrderRequest) {
+  // Si no hay items ni box específico, mostrar disponibles
+  if ((!orderRequest.items || orderRequest.items.length === 0) && (!orderRequest.boxName || orderRequest.boxName.trim() === '')) {
+    const boxList = preloadedBoxes
+      .filter(box => box.availability === "disponible")
+      .map(box => 
+        `\n🍱 ${box.name}\nPrecio: $${box.price}\nContenido:\n${box.contents.map(item => `• ${item}`).join('\n')}`
+      )
+      .join('\n');
+
+    return NextResponse.json({
+      response: `¡Claro! Estos son nuestros boxes disponibles:${boxList}\n\n¿Cuál te gustaría pedir?`
+    });
+  }
+
+  // Normalizar confirmación
+  const isConfirmed = typeof orderRequest.confirm === 'string' 
+    ? ['si', 'sí', 'yes'].includes(orderRequest.confirm.toLowerCase().trim())
+    : orderRequest.confirm;
+
+  // Procesar pedido único o múltiple
+  let items: OrderItem[] = [];
+  if (orderRequest.items) {
+    items = orderRequest.items;
+  } else if (orderRequest.boxName && orderRequest.quantity) {
+    items = [{ boxName: orderRequest.boxName, quantity: orderRequest.quantity }];
+  }
+
+  // Validar y procesar cada item
+  let total = 0;
+  const validItems: Array<{ box: Box, quantity: number }> = [];
+  const errors: string[] = [];
+
+  for (const item of items) {
+    const normalizedSearchName = item.boxName.toLowerCase().trim();
+    const box = preloadedBoxes.find(b => {
+      const boxNameNormalized = b.name.toLowerCase().trim();
+      return boxNameNormalized === normalizedSearchName ||
+             boxNameNormalized.includes(normalizedSearchName) ||
+             normalizedSearchName.includes(boxNameNormalized);
+    });
+
+    if (!box) {
+      errors.push(`No encontré el box "${item.boxName}"`);
+      continue;
+    }
+
+    if (box.availability !== "disponible") {
+      errors.push(`El ${box.name} no está disponible`);
+      continue;
+    }
+
+    if (item.quantity <= 0) {
+      errors.push(`La cantidad para ${box.name} debe ser mayor a 0`);
+      continue;
+    }
+
+    validItems.push({ box, quantity: item.quantity });
+    total += box.price * item.quantity;
+  }
+
+  if (errors.length > 0) {
+    return NextResponse.json({
+      response: `❌ Hay algunos problemas con tu pedido:\n${errors.join('\n')}\n\n¿Querés intentar nuevamente?`
+    });
+  }
+
+  // Si no está confirmado, mostrar resumen
+  if (!isConfirmed) {
+    const itemsList = validItems
+      .map(item => `📦 ${item.quantity}x ${item.box.name} ($${(item.quantity * item.box.price).toFixed(2)})\n${item.box.contents.map(c => `  • ${c}`).join('\n')}`)
+      .join('\n\n');
+
+    return NextResponse.json({
+      response: `📋 Resumen de tu pedido:\n\n${itemsList}\n\n💰 Total: $${total.toFixed(2)}\n\n¿Confirmás el pedido? (Respondé "sí" para confirmar o "no" para cancelar)`
+    });
+  }
+
+  // Confirmar pedido
+  const confirmedList = validItems
+    .map(item => `📦 ${item.quantity}x ${item.box.name}`)
+    .join('\n');
+
+  return NextResponse.json({
+    response: `✅ ¡Pedido confirmado!\n\n${confirmedList}\n\n💰 Total: $${total.toFixed(2)}\n\nTu pedido está siendo preparado. ¿Necesitás algo más?`
+  });
 }
 
 
