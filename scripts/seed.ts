@@ -32,7 +32,10 @@ async function main() {
       data: {
         address: storeInfo.address,
         phone: storeInfo.phone,
-        hours: storeInfo.hours as any,
+        hours: {
+          weekdays: storeInfo.hours.weekdays,
+          weekends: storeInfo.hours.weekends
+        },
         isOpen: storeInfo.isOpen
       }
     })
