@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate",
-    "test": "jest"
+    "test": "jest",
+    "seed": "ts-node scripts/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",

@@ -11,12 +11,12 @@ export const preloadedBoxes: Box[] = [
   // ... resto de los boxes
 ]
 
-export const storeInfo: StoreInfo = {
+export const storeInfo = {
   address: "Av. Corrientes 1234, Buenos Aires, Argentina",
   phone: "+54 11 1234-5678",
-  hours: [
-    { day: "Lunes a Viernes", open: "11:00", close: "22:00" },
-    { day: "Sábados y Domingos", open: "12:00", close: "23:00" },
-  ],
-  isOpen: true,
+  hours: {
+    weekdays: { day: "Lunes a Viernes", open: "11:00", close: "22:00" },
+    weekends: { day: "Sábados y Domingos", open: "12:00", close: "23:00" }
+  },
+  isOpen: true
 } 

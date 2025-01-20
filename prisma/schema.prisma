@@ -13,38 +13,22 @@ model ChatResponse {
   response String
 }
 
-model Product {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  description String
-  price       Float
-  quantity    Int
-  vegan       Boolean
-  boxId       String  @db.ObjectId
-  box         Box     @relation(fields: [boxId], references: [id])
-  orders      Order[]
-}
-
-model Order {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  productId String   @db.ObjectId
-  product   Product  @relation(fields: [productId], references: [id])
-  quantity  Int
-  status    String   @default("pendiente")
-  createdAt DateTime @default(now())
-}
-
 model Box {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  description String
-  name      String
-  products  Product[]
-  createdAt DateTime  @default(now())
-  price     Float
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  description  String
+  price        Float
+  contents     String[]
+  availability String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Store {
-  id     String @id @default(auto()) @map("_id") @db.ObjectId
-  hours  Json[]
-  isOpen Boolean @default(true)
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  address   String
+  phone     String
+  hours     Json
+  isOpen    Boolean
+  createdAt DateTime @default(now())
 }

@@ -23,15 +23,12 @@ export function handleGetStoreInfo() {
   const currentDay = now.getDay()
   const currentTime = now.getHours() * 60 + now.getMinutes()
 
-  const todayHours = hours.find(h => {
-    if (currentDay >= 1 && currentDay <= 5) return h.day === "Lunes a Viernes"
-    return h.day === "Sábados y Domingos"
-  })
+  const todayHours = currentDay >= 1 && currentDay <= 5 ? hours.weekdays : hours.weekends
 
   if (!todayHours) {
     return NextResponse.json({
       response: "Lo siento, no hay información de horarios disponible para hoy."
-    });
+    })
   }
 
   const [openHour, openMinute] = todayHours.open.split(":").map(Number)
@@ -40,7 +37,7 @@ export function handleGetStoreInfo() {
   const closeTime = closeHour * 60 + closeMinute
 
   const isOpen = currentTime >= openTime && currentTime < closeTime
-  const hoursInfo = hours.map((h) => `${h.day}: ${h.open} a ${h.close}hs`).join("\n")
+  const hoursInfo = `${hours.weekdays.day}: ${hours.weekdays.open} a ${hours.weekdays.close}hs\n${hours.weekends.day}: ${hours.weekends.open} a ${hours.weekends.close}hs`
 
   return NextResponse.json({
     response: `🕒 Nuestros horarios:\n\n${hoursInfo}\n\n${isOpen ? "✅ Estamos abiertos ahora" : "❌ Estamos cerrados ahora"}`
