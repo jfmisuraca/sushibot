@@ -77,13 +77,9 @@ export async function handleCreateOrder(orderRequest: OrderRequest) {
       return sum + (box?.price || 0) * item.quantity
     }, 0)
 
-    // Obtener siguiente número de orden
-    const counter = await prisma.counter.upsert({
-      where: { name: 'orderNumber' },
-      update: { value: { increment: 1 } },
-      create: { name: 'orderNumber', value: 1 }
-    })
-
+    // Generar número de orden aleatorio de 4 dígitos
+    const orderNumber = Math.floor(1000 + Math.random() * 9000)
+    
     const order = await prisma.order.create({
       data: {
         items: orderRequest.items as any,
@@ -97,7 +93,7 @@ export async function handleCreateOrder(orderRequest: OrderRequest) {
       .join(", ")
 
     return createResponse(
-      `¡Gracias! Tu pedido #${counter.value} de ${orderDetails} (Total: $${total.toFixed(2)}) ha sido registrado.`
+      `¡Gracias! Tu pedido #${orderNumber} de ${orderDetails} (Total: $${total.toFixed(2)}) ha sido registrado.`
     )
   } catch (error) {
     console.error('Error en handleCreateOrder:', error)

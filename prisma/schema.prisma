@@ -37,10 +37,3 @@ model Order {
   status    String   @default("pending")
   createdAt DateTime @default(now())
 }
-
-// Modelo para manejar secuencias
-model Counter {
-  id      String @id @default(auto()) @map("_id") @db.ObjectId
-  name    String @unique
-  value   Int    @default(1)
-}
