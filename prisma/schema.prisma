@@ -25,14 +25,14 @@ model Box {
 model Store {
   id      String  @id @default(auto()) @map("_id") @db.ObjectId
   address String
-  phone   String
+  phone   String  @unique
   hours   Json
   isOpen  Boolean
 }
 
 model Order {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  items     Json     
+  items     Json
   total     Float
   status    String   @default("pending")
   createdAt DateTime @default(now())
