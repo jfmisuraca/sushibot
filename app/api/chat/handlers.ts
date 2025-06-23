@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server"
 import { preloadedBoxes, storeInfo } from "./data"
 import type { OrderRequest } from "./types"
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 const createResponse = (response: string, status = 200) => {
     return NextResponse.json({ response }, { status })
