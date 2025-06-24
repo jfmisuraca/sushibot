@@ -43,27 +43,39 @@ body {
 .chat-container {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
   height: 100vh;
-  max-width: 42rem;
-  margin: 0 auto;
-  padding: 1rem;
-  box-sizing: border-box;
+  padding: 0;
 }
 
 .chat-card {
+  flex: 1 1 0%;
+  min-height: 0;
   width: 100%;
   max-width: 42rem;
-  margin-top: 2rem;
-  margin-right: auto;
-  margin-bottom: 0px;
   margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  flex-direction: column;
   background: var(--background);
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.chat-content {
+  flex: 1 1 0%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  position: relative;
-  height: 100%;
+  padding: 1rem;
+}
+
+.messages-container {
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 1rem;
 }
 
 .chat-header {
@@ -87,6 +99,7 @@ body {
   color: var(--foreground);
 }
 
+<<<<<<< HEAD
 .chat-content {
   flex: 1;
   display: flex;
@@ -102,6 +115,19 @@ body {
   padding-right: 1rem;
 }
 
+||||||| 6d50e30
+.chat-content {
+  padding: 1rem;
+}
+
+.messages-container {
+  height: 700px;
+  overflow-y: auto;
+  padding-right: 1rem;
+}
+
+=======
+>>>>>>> styling-fix
 .message-list {
   display: flex;
   flex-direction: column;
@@ -157,8 +183,8 @@ body {
 }
 
 .chat-footer {
-  padding: 1rem;
   border-top: 1px solid var(--border);
+  padding: 1rem;
 }
 
 .chat-form {
@@ -241,16 +267,28 @@ body {
   .chat-container {
     padding: 0;
     height: 100vh;
+<<<<<<< HEAD
     display: flex;
     flex-direction: column;
+||||||| 6d50e30
+=======
+    max-width: none;
+    margin: 0;
+>>>>>>> styling-fix
   }
 
   .chat-card {
     border-radius: 0;
     margin-top: 0;
     height: 100vh;
+<<<<<<< HEAD
     display: flex;
     flex-direction: column;
+||||||| 6d50e30
+=======
+    max-width: none;
+    box-shadow: none;
+>>>>>>> styling-fix
   }
 
   .chat-content {
