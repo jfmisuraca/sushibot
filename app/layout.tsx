@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Simple Chatbot',
-  description: 'A basic chatbot using Next.js and MongoDB',
+  description: 'A basic chatbot using Nextjs and MongoDB',
 }
 
 export default function RootLayout({
