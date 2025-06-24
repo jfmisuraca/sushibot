@@ -99,35 +99,6 @@ body {
   color: var(--foreground);
 }
 
-<<<<<<< HEAD
-.chat-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  padding: 1rem;
-}
-
-.messages-container {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding-right: 1rem;
-}
-
-||||||| 6d50e30
-.chat-content {
-  padding: 1rem;
-}
-
-.messages-container {
-  height: 700px;
-  overflow-y: auto;
-  padding-right: 1rem;
-}
-
-=======
->>>>>>> styling-fix
 .message-list {
   display: flex;
   flex-direction: column;
@@ -267,28 +238,12 @@ body {
   .chat-container {
     padding: 0;
     height: 100vh;
-<<<<<<< HEAD
-    display: flex;
-    flex-direction: column;
-||||||| 6d50e30
-=======
-    max-width: none;
-    margin: 0;
->>>>>>> styling-fix
   }
 
   .chat-card {
     border-radius: 0;
     margin-top: 0;
     height: 100vh;
-<<<<<<< HEAD
-    display: flex;
-    flex-direction: column;
-||||||| 6d50e30
-=======
-    max-width: none;
-    box-shadow: none;
->>>>>>> styling-fix
   }
 
   .chat-content {
